@@ -10,14 +10,14 @@
 
 <style>
 :root {
-  --bg1:#2a3a4a;
-  --bg2:#3a4a5a;
-  --bg3:#4a5a6a;
-  --panel:#4a5a6a;
+  --bg1:#5a7a9a;
+  --bg2:#7a9aba;
+  --bg3:#9abbcc;
+  --panel:#7a9aba;
   --accent:#ffd54f;
   --accent2:#ff9f1c;
   --accent3:#64b5f6;
-  --outline:#1f2a35;
+  --outline:#3a5a7a;
   --success:#4caf50;
 }
 
@@ -28,7 +28,7 @@
 body {
   margin: 0;
   font-family: 'Segoe UI', system-ui, sans-serif;
-  background: linear-gradient(135deg, #2a3a4a 0%, #3a4a5a 50%, #1f2a35 100%);
+  background: linear-gradient(135deg, #6a8aaa 0%, #8aaaca 50%, #5a7a9a 100%);
   color: #fff;
   overflow: hidden;
   height: 100vh;
@@ -60,17 +60,17 @@ header {
   top: 12px;
   left: 12px;
   right: 12px;
-  height: 80px;
-  background: linear-gradient(135deg, #4a5a6a 0%, #5a6a7a 100%);
-  border-radius: 18px;
-  border: 3px solid rgba(255, 213, 79, 0.3);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 2px 6px rgba(255, 255, 255, 0.15);
+  height: 90px;
+  background: linear-gradient(135deg, #7a9aba 0%, #8aaaca 100%);
+  border-radius: 20px;
+  border: 3px solid rgba(255, 213, 79, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), inset 0 2px 6px rgba(255, 255, 255, 0.25);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
+  padding: 0 36px;
   z-index: 100;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
 }
 
 h1 {
@@ -83,16 +83,15 @@ h1 {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-shadow: 
-    0 4px 0 rgba(0, 0, 0, 0.5),
-    0 8px 12px rgba(0, 0, 0, 0.4),
-    0 0 20px rgba(255, 213, 79, 0.5);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+    0 2px 0 rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(255, 213, 79, 0.4);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   animation: float 3s ease-in-out infinite, pulse-glow 2s ease-in-out infinite;
 }
 
 @keyframes pulse-glow {
-  0%, 100% { text-shadow: 0 4px 0 rgba(0, 0, 0, 0.5), 0 8px 12px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 213, 79, 0.5); }
-  50% { text-shadow: 0 4px 0 rgba(0, 0, 0, 0.5), 0 8px 12px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 213, 79, 0.8); }
+  0%, 100% { text-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 213, 79, 0.4); }
+  50% { text-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 0 30px rgba(255, 213, 79, 0.6); }
 }
 
 .top-right {
@@ -102,27 +101,34 @@ h1 {
 }
 
 #bots, .currency {
-  font-size: 22px;
+  font-size: 56px;
   font-weight: 900;
-  background: linear-gradient(135deg, #64b5f6, #42a5f5, #2196f3);
+  background: linear-gradient(135deg, #ff6b6b, #ff9f1c, #ffd54f);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   text-shadow: 
-    0 2px 0 rgba(0, 0, 0, 0.6),
-    0 4px 8px rgba(33, 150, 243, 0.3);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+    0 2px 0 rgba(0, 0, 0, 0.2),
+    0 0 30px rgba(255, 159, 28, 0.5);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+  animation: pulse 1.5s ease-in-out infinite, counterGlow 2s ease-in-out infinite;
+  min-width: 200px;
+}
+
+@keyframes counterGlow {
+  0%, 100% { text-shadow: 0 2px 0 rgba(0, 0, 0, 0.2), 0 0 30px rgba(255, 159, 28, 0.5); }
+  50% { text-shadow: 0 2px 0 rgba(0, 0, 0, 0.2), 0 0 50px rgba(255, 159, 28, 0.9); }
 }
 
 /* ICON BUTTONS */
 .icon-btn {
   width: 56px;
   height: 56px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #2a3847, #1f2935);
-  border: 3px solid rgba(255, 213, 79, 0.4);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #8aaaca, #9abbcc);
+  border: 2px solid rgba(255, 213, 79, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -131,7 +137,7 @@ h1 {
   font-size: 24px;
   position: relative;
   overflow: hidden;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
 }
 
 .icon-btn::before {
@@ -146,10 +152,10 @@ h1 {
 }
 
 .icon-btn:hover {
-  transform: translateY(-6px) scale(1.12);
-  box-shadow: 0 12px 32px rgba(255, 213, 79, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  transform: translateY(-4px) scale(1.1);
+  box-shadow: 0 8px 20px rgba(255, 213, 79, 0.35), inset 0 1px 3px rgba(255, 255, 255, 0.4);
   border-color: rgba(255, 213, 79, 0.8);
-  background: linear-gradient(135deg, #3a4857, #2f3945);
+  background: linear-gradient(135deg, #9abbcc, #aaccdd);
   animation: bounce 0.6s ease-in-out;
 }
 
@@ -175,30 +181,31 @@ h1 {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 280px;
-  height: 280px;
+  width: 300px;
+  height: 300px;
   background: radial-gradient(circle at 30% 20%, #87ceeb 0%, #4fb3ff 30%, #0066cc 80%, #004499 100%);
   border-radius: 50%;
-  border: 10px solid rgba(0, 0, 0, 0.4);
+  border: 12px solid rgba(0, 0, 0, 0.3);
   box-shadow: 
-    0 24px 64px rgba(0, 0, 0, 0.8),
-    inset -12px -12px 36px rgba(0, 0, 0, 0.4),
-    inset 12px 12px 36px rgba(255, 255, 255, 0.3),
-    0 0 40px rgba(100, 181, 246, 0.3);
+    0 20px 50px rgba(0, 0, 0, 0.4),
+    inset -12px -12px 36px rgba(0, 0, 0, 0.3),
+    inset 12px 12px 36px rgba(255, 255, 255, 0.2),
+    0 0 50px rgba(100, 181, 246, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.1s ease-out;
+  transition: all 0.12s ease-out;
   animation: float 4s ease-in-out infinite, robotPulse 2s ease-in-out infinite;
   position: relative;
-  overflow: hidden;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.5));
+  overflow: visible;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35));
 }
 
-@keyframes robotPulse {
-  0%, 100% { box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8), inset -12px -12px 36px rgba(0, 0, 0, 0.4), inset 12px 12px 36px rgba(255, 255, 255, 0.3), 0 0 40px rgba(100, 181, 246, 0.3); }
-  50% { box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8), inset -12px -12px 36px rgba(0, 0, 0, 0.4), inset 12px 12px 36px rgba(255, 255, 255, 0.3), 0 0 60px rgba(100, 181, 246, 0.6); }
+@keyframes robotClick {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(0.92); }
+  100% { transform: translate(-50%, -50%) scale(1); }
 }
 
 #robot::before {
@@ -220,8 +227,8 @@ h1 {
 }
 
 #robot:hover {
-  transform: translate(-50%, -50%) scale(1.12);
-  box-shadow: 0 36px 96px rgba(76, 175, 255, 0.6), inset -12px -12px 36px rgba(0, 0, 0, 0.3), inset 12px 12px 36px rgba(255, 255, 255, 0.4);
+  transform: translate(-50%, -50%) scale(1.15);
+  box-shadow: 0 28px 60px rgba(76, 175, 255, 0.5), inset -12px -12px 36px rgba(0, 0, 0, 0.3), inset 12px 12px 36px rgba(255, 255, 255, 0.3);
   animation: float 4s ease-in-out infinite, wiggle 0.3s ease-in-out infinite;
 }
 
@@ -250,13 +257,13 @@ h1 {
 
 .factory {
   flex: 1;
-  background: linear-gradient(135deg, rgba(74, 90, 106, 0.6), rgba(90, 106, 122, 0.6));
+  background: linear-gradient(135deg, rgba(122, 154, 170, 0.5), rgba(154, 186, 202, 0.5));
   border-radius: 18px;
-  border: 3px solid rgba(255, 213, 79, 0.15);
-  backdrop-filter: blur(12px);
+  border: 3px solid rgba(255, 213, 79, 0.2);
+  backdrop-filter: blur(8px);
   overflow: hidden;
   position: relative;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .factory h2 {
@@ -272,20 +279,20 @@ h1 {
   background-clip: text;
   letter-spacing: 1.5px;
   text-shadow: 
-    0 2px 0 rgba(0, 0, 0, 0.6),
-    0 4px 8px rgba(0, 0, 0, 0.4);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    0 1px 0 rgba(0, 0, 0, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 /* PANELS */
 .panel {
-  background: linear-gradient(135deg, #4a5a6a 0%, #5a6a7a 100%);
+  background: linear-gradient(135deg, #7a9aba 0%, #8aaaca 100%);
   border-radius: 18px;
-  border: 2px solid rgba(255, 213, 79, 0.25);
+  border: 2px solid rgba(255, 213, 79, 0.3);
   padding: 20px;
   margin-bottom: 14px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3), inset 0 2px 6px rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12), inset 0 1px 3px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
   animation: slideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   transition: all 0.3s ease;
 }
@@ -300,18 +307,18 @@ h1 {
   background-clip: text;
   letter-spacing: 2px;
   text-transform: uppercase;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 /* UPGRADE BUTTONS */
 .upgrade {
-  background: linear-gradient(135deg, #3a4a5a 0%, #2f3a4a 100%);
-  border: 2px solid rgba(255, 213, 79, 0.3);
+  background: linear-gradient(135deg, #6a8aaa 0%, #5a7a9a 100%);
+  border: 2px solid rgba(255, 213, 79, 0.35);
   border-radius: 16px;
   padding: 16px 18px;
   margin-bottom: 14px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.15);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   color: #fff;
@@ -321,8 +328,8 @@ h1 {
   line-height: 1.5;
   position: relative;
   overflow: hidden;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
 .upgrade::before {
@@ -343,8 +350,8 @@ h1 {
 .upgrade:hover {
   transform: translateY(-6px) scale(1.05);
   border-color: rgba(255, 213, 79, 0.7);
-  box-shadow: 0 14px 32px rgba(255, 213, 79, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.2);
-  background: linear-gradient(135deg, #3a4857 0%, #2f3945 100%);
+  box-shadow: 0 10px 24px rgba(255, 213, 79, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #7a9aba 0%, #6a8aaa 100%);
   animation: bounce 0.5s ease-in-out;
 }
 
@@ -394,21 +401,21 @@ h1 {
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   display: none;
   align-items: center;
   justify-content: center;
   z-index: 200;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(4px);
   animation: fadeInScale 0.3s ease-out;
 }
 
 .modal-box {
-  background: linear-gradient(135deg, #4a5a6a 0%, #5a6a7a 100%);
+  background: linear-gradient(135deg, #7a9aba 0%, #8aaaca 100%);
   border: 3px solid rgba(255, 213, 79, 0.4);
   border-radius: 20px;
   padding: 40px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
   max-width: 480px;
   text-align: center;
   animation: slideIn 0.3s ease-out;
@@ -423,8 +430,8 @@ h1 {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: 2px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 #achList, #dailyText, #offlineText {
@@ -578,7 +585,7 @@ h1 {
 
 .upgrade.common:hover {
   border-color: rgba(255, 213, 79, 0.7);
-  background: linear-gradient(135deg, #4a5a6f, #3f4f5f);
+  background: linear-gradient(135deg, #7a9aba, #6a8aaa);
 }
 
 .upgrade.rare {
@@ -587,8 +594,8 @@ h1 {
 
 .upgrade.rare:hover {
   border-color: rgba(100, 181, 246, 0.8);
-  background: linear-gradient(135deg, #1f3a5f, #1a2f4f);
-  box-shadow: 0 14px 32px rgba(100, 181, 246, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #5a7a9a, #4a6a8a);
+  box-shadow: 0 10px 24px rgba(100, 181, 246, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
 .upgrade.epic {
@@ -597,8 +604,8 @@ h1 {
 
 .upgrade.epic:hover {
   border-color: rgba(255, 107, 107, 0.8);
-  background: linear-gradient(135deg, #5f1f1f, #4f1a1a);
-  box-shadow: 0 14px 32px rgba(255, 107, 107, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, #8a6a6a, #7a5a5a);
+  box-shadow: 0 10px 24px rgba(255, 107, 107, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 </style>
 </head>
@@ -613,11 +620,6 @@ h1 {
       <path d="M0,-6 L0,0 L4,2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       <circle cx="0" cy="0" r="2" fill="currentColor"/>
     </g>
-  </svg>
-</div>
-<div class="icon-btn" onclick="openAchievements()" title="Achievements">
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2 L15 8 L22 8 L17 13 L19 20 L12 16 L5 20 L7 13 L2 8 L9 8 Z"/>
   </svg>
 </div>
 <div class="icon-btn" onclick="openLeaderboard()" title="Leaderboard">
@@ -664,10 +666,7 @@ h1 {
 </div>
 
 <!-- DAILY -->
-<div class="modal" id="dailyModal"><div class="modal-box" style="max-width: 520px; padding: 50px;"><h3 style="font-size: 36px;">🎁 Daily Reward</h3><div id="dailyText" style="font-size: 18px; margin: 30px 0; min-height: 100px; display: flex; flex-direction: column; justify-content: center;">💰 Reward: +500 Bots</div><div style="margin: 20px 0; padding: 20px; background: rgba(255,213,79,0.1); border-radius: 12px; border-left: 4px solid #ffd54f;"><div style="font-size: 14px; color: #ccc;">Next daily reward in:</div><div id="dailyTimer" style="font-size: 20px; font-weight: 900; color: #ffd54f; margin-top: 8px;">23:59:59</div></div><button onclick="claimDaily()" style="font-size: 18px; padding: 16px 48px; margin-top: 20px;">✨ Claim Reward</button></div></div>
-
-<!-- ACHIEVEMENTS -->
-<div class="modal" id="achModal"><div class="modal-box" style="max-width: 520px; padding: 50px;"><h3 style="font-size: 36px;">🏆 Achievements</h3><div id="achList" style="font-size: 16px; margin: 20px 0; max-height: 400px; overflow-y: auto;"></div><button onclick="closeModals()" style="font-size: 16px; padding: 14px 40px; margin-top: 20px;">Close</button></div></div>
+<div class="modal" id="dailyModal"><div class="modal-box" style="max-width: 520px; padding: 50px;"><h3 style="font-size: 36px;">🎁 Daily Reward</h3><div id="dailyText" style="font-size: 18px; margin: 30px 0; min-height: 100px; display: flex; flex-direction: column; justify-content: center;"></div><div style="margin: 20px 0; padding: 20px; background: rgba(255,213,79,0.1); border-radius: 12px; border-left: 4px solid #ffd54f;"><div style="font-size: 14px; color: #ccc;">Next daily reward in:</div><div id="dailyTimer" style="font-size: 20px; font-weight: 900; color: #ffd54f; margin-top: 8px;">23:59:59</div></div><button onclick="claimDaily()" style="font-size: 18px; padding: 16px 48px; margin-top: 20px;">✨ Claim Reward</button></div></div>
 
 <!-- SETTINGS -->
 <div class="modal" id="setModal"><div class="modal-box" style="max-width: 540px; padding: 50px;"><h3 style="font-size: 36px;">⚙️ Settings</h3><div style="margin: 40px 0; text-align: left;"><div style="margin-bottom: 40px;"><div style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #ffd54f;">🔊 Sound & Music</div><div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 12px; background: rgba(255,213,79,0.1); border-radius: 10px;"><label style="font-size: 16px; margin: 0; cursor: pointer;">🔊 Sound Effects</label><input type="checkbox" id="soundToggle" checked style="width: 24px; height: 24px; cursor: pointer; accent-color: #ffd54f;"></div><div style="margin: 20px 0;"><label style="font-size: 14px; color: #ccc; display: block; margin-bottom: 8px;">Sound Volume: <span id="soundVolumeDisplay">100</span>%</label><input type="range" id="soundVolume" min="0" max="100" value="100" style="width: 100%; height: 8px; cursor: pointer; accent-color: #ffd54f;"></div></div><div style="margin-bottom: 30px;"><div style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #ff9f1c;">🎵 Music</div><div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 12px; background: rgba(255,159,28,0.1); border-radius: 10px;"><label style="font-size: 16px; margin: 0; cursor: pointer;">🎵 Background Music</label><input type="checkbox" id="musicToggle" checked style="width: 24px; height: 24px; cursor: pointer; accent-color: #ff9f1c;"></div><div style="margin: 20px 0;"><label style="font-size: 14px; color: #ccc; display: block; margin-bottom: 8px;">Music Volume: <span id="musicVolumeDisplay">100</span>%</label><input type="range" id="musicVolume" min="0" max="100" value="100" style="width: 100%; height: 8px; cursor: pointer; accent-color: #ff9f1c;"></div></div></div><button onclick="closeModals()" style="font-size: 16px; padding: 14px 40px; width: 100%; margin-top: 20px;">Close Settings</button></div></div>
@@ -680,14 +679,14 @@ const cg=window.CrazyGamesSDK; if(cg) cg.init();
 let bots=0,perClick=1,autoBots=0,megaClick=0,clickCost=10,autoCost=50,megaCost=250,rebirths=0;
 let botLevel=0,botCost=100,multiplier=1,multiplierCost=500,superLevel=0,superCost=1000;
 let factoryLevel=0,factoryCost=200,momentumLevel=0,momentumCost=750,legendaryLevel=0,legendaryCost=2500;
-let milestone=1,achievements={click100:false,bots1k:false};
+let milestone=1,dailyStreak=0,lastDailyClaimTime=0;
 let sound=true,music=true,soundVolume=1,musicVolume=1;
 
 const clickSound=new Audio('https://assets.mixkit.co/sfx/preview/mixkit-soft-click-1124.mp3');clickSound.volume=.4;
 const el=i=>document.getElementById(i);
 
 function updateUI(){
- el('bots').textContent=Math.floor(bots);
+ el('bots').textContent=Math.floor(bots).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
  el('clickCost').textContent=clickCost;
  el('autoCost').textContent=autoCost;
  el('megaCost').textContent=megaCost;
@@ -698,7 +697,6 @@ function updateUI(){
  el('momentumCost').textContent=momentumCost;
  el('legendaryCost').textContent=legendaryCost;
  el('milestone').textContent=milestone;
- el('achCount').textContent=Object.values(achievements).filter(v=>v).length;
  save();
 }
 
@@ -707,21 +705,22 @@ robot.onclick=e=>{
  burst(e.clientX,e.clientY);
  createClickRing(e.clientX,e.clientY);
  createSparks(e.clientX,e.clientY);
- screenShake(4,120);
  addButtonPulse(robot);
+ robot.style.animation='robotClick 0.4s ease-out';
+ setTimeout(()=>robot.style.animation='float 4s ease-in-out infinite, robotPulse 2s ease-in-out infinite',400);
  if(sound){clickSound.currentTime=0;clickSound.play()}
- checkAchievements();updateUI();
+ updateUI();
 }
 
-function buyClick(){if(bots>=clickCost){bots-=clickCost;perClick++;clickCost=Math.ceil(clickCost*1.6);screenShake(3,60);createConfetti();showUpgradeToast('Stronger Click ⬆️');updateUI()}}
-function buyAuto(){if(bots>=autoCost){bots-=autoCost;autoBots++;autoCost=Math.ceil(autoCost*2);screenShake(3,60);createConfetti();showUpgradeToast('Auto Builder 🤖');updateUI()}}
-function buyMega(){if(bots>=megaCost){bots-=megaCost;megaClick+=5;megaCost=Math.ceil(megaCost*2.5);screenShake(3,60);createConfetti();showUpgradeToast('Mega Click 💥');updateUI()}}
-function buyBot(){if(bots>=botCost){bots-=botCost;botLevel++;autoBots+=2;botCost=Math.ceil(botCost*2.2);screenShake(3,60);createConfetti();showUpgradeToast('Bot Assistant 🦾');updateUI()}}
-function buyMultiplier(){if(bots>=multiplierCost){bots-=multiplierCost;multiplier+=0.5;perClick*=1.2;multiplierCost=Math.ceil(multiplierCost*2.8);screenShake(3,60);createConfetti();showUpgradeToast('Click Multiplier 2️⃣');updateUI()}}
-function buySuper(){if(bots>=superCost){bots-=superCost;superLevel++;megaClick+=8;autoBots+=3;superCost=Math.ceil(superCost*3);screenShake(3,60);createConfetti();showUpgradeToast('Super Bot ⭐');updateUI()}}
-function buyFactory(){if(bots>=factoryCost){bots-=factoryCost;factoryLevel++;autoBots+=1;perClick+=0.5;factoryCost=Math.ceil(factoryCost*2.4);screenShake(3,60);createConfetti();showUpgradeToast('Factory Upgrade 🏭');updateUI()}}
-function buyMomentum(){if(bots>=momentumCost){bots-=momentumCost;momentumLevel++;megaClick+=10;multiplier+=0.8;momentumCost=Math.ceil(momentumCost*2.6);screenShake(3,60);createConfetti();showUpgradeToast('Momentum Boost 💫');updateUI()}}
-function buyLegendary(){if(bots>=legendaryCost){bots-=legendaryCost;legendaryLevel++;perClick*=1.5;autoBots*=1.3;megaClick*=1.4;legendaryCost=Math.ceil(legendaryCost*3.5);screenShake(6,120);createExplosion();showUpgradeToast('Legendary Power 👑');updateUI()}}
+function buyClick(){if(bots>=clickCost){bots-=clickCost;perClick++;clickCost=Math.ceil(clickCost*1.6);createConfetti();showUpgradeToast('Stronger Click ⬆️');updateUI()}}
+function buyAuto(){if(bots>=autoCost){bots-=autoCost;autoBots++;autoCost=Math.ceil(autoCost*2);createConfetti();showUpgradeToast('Auto Builder 🤖');updateUI()}}
+function buyMega(){if(bots>=megaCost){bots-=megaCost;megaClick+=5;megaCost=Math.ceil(megaCost*2.5);createConfetti();showUpgradeToast('Mega Click 💥');updateUI()}}
+function buyBot(){if(bots>=botCost){bots-=botCost;botLevel++;autoBots+=2;botCost=Math.ceil(botCost*2.2);createConfetti();showUpgradeToast('Bot Assistant 🦾');updateUI()}}
+function buyMultiplier(){if(bots>=multiplierCost){bots-=multiplierCost;multiplier+=0.5;perClick*=1.2;multiplierCost=Math.ceil(multiplierCost*2.8);createConfetti();showUpgradeToast('Click Multiplier 2️⃣');updateUI()}}
+function buySuper(){if(bots>=superCost){bots-=superCost;superLevel++;megaClick+=8;autoBots+=3;superCost=Math.ceil(superCost*3);createConfetti();showUpgradeToast('Super Bot ⭐');updateUI()}}
+function buyFactory(){if(bots>=factoryCost){bots-=factoryCost;factoryLevel++;autoBots+=1;perClick+=0.5;factoryCost=Math.ceil(factoryCost*2.4);createConfetti();showUpgradeToast('Factory Upgrade 🏭');updateUI()}}
+function buyMomentum(){if(bots>=momentumCost){bots-=momentumCost;momentumLevel++;megaClick+=10;multiplier+=0.8;momentumCost=Math.ceil(momentumCost*2.6);createConfetti();showUpgradeToast('Momentum Boost 💫');updateUI()}}
+function buyLegendary(){if(bots>=legendaryCost){bots-=legendaryCost;legendaryLevel++;perClick*=1.5;autoBots*=1.3;megaClick*=1.4;legendaryCost=Math.ceil(legendaryCost*3.5);createExplosion();showUpgradeToast('Legendary Power 👑');updateUI()}}
 
 function showUpgradeToast(text){
   const toast=document.createElement('div');
@@ -749,7 +748,7 @@ function createConfetti(){
 
 setInterval(()=>{bots+=autoBots;checkMilestones();updateUI()},1000);
 
-function doRebirth(){if(bots>=1000){rebirths++;bots=0;perClick=1;autoBots=0;megaClick=0;screenShake(18,450);createExplosion();showMilestonePopup('⚡ REBIRTH! ⚡');updateUI()}}
+function doRebirth(){if(bots>=1000){rebirths++;bots=0;perClick=1;autoBots=0;megaClick=0;createExplosion();showMilestonePopup('⚡ REBIRTH! ⚡');updateUI()}}
 
 function createExplosion(){
   for(let i=0;i<52;i++){
@@ -768,47 +767,73 @@ function createExplosion(){
 }
 
 function burst(x,y){
-  for(let i=0;i<20;i++){
+  const counterEl=el('bots');
+  const rect=counterEl.getBoundingClientRect();
+  const targetX=rect.left+rect.width/2;
+  const targetY=rect.top+rect.height/2;
+  
+  for(let i=0;i<28;i++){
     const c=document.createElement('div');
     c.className='coin';
     c.style.left=x+'px';
     c.style.top=y+'px';
     const angle=Math.random()*Math.PI*2;
-    const velocity=5+Math.random()*8;
-    const dx=Math.cos(angle)*velocity;
-    const dy=Math.sin(angle)*velocity;
+    const initialVelocity=3+Math.random()*5;
+    const initialDx=Math.cos(angle)*initialVelocity;
+    const initialDy=Math.sin(angle)*initialVelocity;
+    
     c.style.boxShadow=`0 0 12px rgba(255,213,79,1),inset -2px -2px 4px rgba(0,0,0,0.5)`;
-    c.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${dx*100}px,${dy*100}px) scale(0)`,opacity:0}],{duration:1000,easing:'cubic-bezier(.2,.8,.2,1)'});
+    
+    const frames=[
+      {transform:'translate(0,0) scale(1)',opacity:1},
+      {transform:`translate(${initialDx*60}px,${initialDy*60}px) scale(0.9)`,opacity:1,offset:0.4},
+      {transform:`translate(${targetX-x}px,${targetY-y}px) scale(0)`,opacity:0}
+    ];
+    
+    c.animate(frames,{duration:1200,easing:'cubic-bezier(0.3,0,0.7,1)'});
     document.body.appendChild(c);
-    setTimeout(()=>c.remove(),1000);
+    setTimeout(()=>c.remove(),1200);
   }
 }
 
 function checkMilestones(){if(bots>1000&&milestone===1){milestone=2;el('robot').classList.add('big');showMilestonePopup('MILESTONE REACHED!')}}
-function checkAchievements(){if(bots>=1000)achievements.bots1k=true}
 
 // DAILY
-function openDaily(){el('dailyModal').style.display='flex';el('dailyText').innerHTML='<div style="font-size:24px;margin:10px 0;font-weight:900;">💰 Reward: <span style="background:linear-gradient(135deg,#ffd54f,#ff9f1c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">+500 Bots</span></div>'}
-function claimDaily(){bots+=500;showDailyToast();closeModals();updateUI()}
+function openDaily(){
+  el('dailyModal').style.display='flex';
+  const baseReward=500+dailyStreak*100;
+  el('dailyText').innerHTML=`<div style="font-size:20px;margin:10px 0;font-weight:700;">Day ${dailyStreak+1}</div><div style="font-size:28px;margin:15px 0;font-weight:900;">💰 <span style="background:linear-gradient(135deg,#4caf50,#81c784);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${baseReward} Bots</span></div><div style="font-size:13px;color:#ccc;margin-top:15px;">Streak: <strong style="color:#ffd54f;">${dailyStreak}</strong> days</div>`;
+}
+function claimDaily(){
+  const now=Date.now();
+  if(lastDailyClaimTime && now-lastDailyClaimTime<86400000){showUpgradeToast('❌ Already claimed today!');return}
+  const baseReward=500+dailyStreak*100;
+  bots+=baseReward;
+  dailyStreak++;
+  lastDailyClaimTime=now;
+  showDailyToast(baseReward);
+  closeModals();
+  updateUI();
+}
 
-function showDailyToast(){
+function showDailyToast(amount){
   const toast=document.createElement('div');
   toast.className='toast';
-  toast.innerHTML='✨ Daily Reward Claimed! <span style="background:linear-gradient(135deg,#4caf50,#81c784);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:900;">+500 Bots</span>';
+  toast.innerHTML=`✨ Streak +1 | <span style="background:linear-gradient(135deg,#4caf50,#81c784);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:900;">+${amount} Bots</span>`;
   document.body.appendChild(toast);
   setTimeout(()=>toast.classList.add('show'),10);
   setTimeout(()=>{toast.classList.remove('show');setTimeout(()=>toast.remove(),300)},2700);
 }
 
 // MODALS
-function openAchievements(){el('achModal').style.display='flex';el('achList').innerHTML=Object.entries(achievements).map(([k,v])=>`<div style="margin:8px 0;padding:12px;background:rgba(255,213,79,0.1);border-radius:8px;border-left:4px solid ${v?'#4caf50':'#999'};">${k}: ${v?'🏆 Done':'❓ Locked'}</div>`).join('')}
+function openAchievements(){el('achModal').style.display='flex';}
 function openSettings(){el('setModal').style.display='flex';el('soundToggle').checked=sound;el('musicToggle').checked=music;el('soundVolume').value=Math.round(soundVolume*100);el('musicVolume').value=Math.round(musicVolume*100);document.getElementById('soundVolumeDisplay').textContent=Math.round(soundVolume*100);document.getElementById('musicVolumeDisplay').textContent=Math.round(musicVolume*100);}
 function openLeaderboard(){if(cg)cg.showLeaderboard({leaderboardID:'main'});else alert('📊 Leaderboards coming soon!')}
 function closeModals(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none')}
 
 // SAVE + OFFLINE
-function save(){localStorage.setItem('save',JSON.stringify({bots,perClick,autoBots,megaClick,clickCost,autoCost,megaCost,botLevel,botCost,multiplier,multiplierCost,superLevel,superCost,factoryLevel,factoryCost,momentumLevel,momentumCost,legendaryLevel,legendaryCost,milestone,achievements,time:Date.now(),sound,music,soundVolume,musicVolume}))}
-function load(){const d=JSON.parse(localStorage.getItem('save'));if(!d)return;Object.assign({bots,perClick,autoBots,megaClick,clickCost,autoCost,megaCost,botLevel,botCost,multiplier,multiplierCost,superLevel,superCost,factoryLevel,factoryCost,momentumLevel,momentumCost,legendaryLevel,legendaryCost,milestone,achievements,sound,music,soundVolume,musicVolume},d);const diff=Math.floor((Date.now()-d.time)/1000);const earned=diff*autoBots;if(earned>0){bots+=earned;el('offlineText').textContent=`You earned <span style="background:linear-gradient(135deg,#4caf50,#81c784);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:900;">${earned} Bots</span> while away!`;el('offlineModal').style.display='flex'}}
+function save(){localStorage.setItem('save',JSON.stringify({bots,perClick,autoBots,megaClick,clickCost,autoCost,megaCost,botLevel,botCost,multiplier,multiplierCost,superLevel,superCost,factoryLevel,factoryCost,momentumLevel,momentumCost,legendaryLevel,legendaryCost,milestone,time:Date.now(),sound,music,soundVolume,musicVolume,dailyStreak,lastDailyClaimTime}))}
+function load(){const d=JSON.parse(localStorage.getItem('save'));if(!d)return;Object.assign({bots,perClick,autoBots,megaClick,clickCost,autoCost,megaCost,botLevel,botCost,multiplier,multiplierCost,superLevel,superCost,factoryLevel,factoryCost,momentumLevel,momentumCost,legendaryLevel,legendaryCost,milestone,sound,music,soundVolume,musicVolume,dailyStreak,lastDailyClaimTime},d);const diff=Math.floor((Date.now()-d.time)/1000);const earned=diff*autoBots;if(earned>0){bots+=earned;el('offlineText').textContent=`You earned <span style="background:linear-gradient(135deg,#4caf50,#81c784);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:900;">${earned} Bots</span> while away!`;el('offlineModal').style.display='flex'}}
 load();updateUI();
 
 // REWARDED AD
@@ -826,18 +851,6 @@ function showMilestonePopup(text){
   setTimeout(()=>{popup.style.animation='fadeOut 0.6s ease-in';setTimeout(()=>popup.remove(),600)},1600);
 }
 
-function screenShake(intensity=8,duration=200){
-  const start=Date.now();
-  const shake=()=>{
-    const elapsed=Date.now()-start;
-    if(elapsed>duration){document.body.style.transform='';return}
-    const x=(Math.random()-0.5)*intensity;const y=(Math.random()-0.5)*intensity;const r=(Math.random()-0.5)*2;
-    document.body.style.transform=`translate(${x}px,${y}px) rotate(${r}deg)`;
-    requestAnimationFrame(shake);
-  };
-  shake();
-}
-
 function addButtonPulse(el){
   el.style.animation='pulse 0.5s cubic-bezier(0.4,0,0.2,1)';
   setTimeout(()=>{el.style.animation=''},500);
@@ -852,18 +865,18 @@ function createClickRing(x,y){
 }
 
 function createSparks(x,y){
-  const sparkCount=Math.random()>0.5?12:16;
+  const sparkCount=20+Math.floor(Math.random()*8);
   for(let i=0;i<sparkCount;i++){
     const spark=document.createElement('div');
     spark.className='particle spark';
     const angle=Math.random()*Math.PI*2;
-    const dist=50+Math.random()*80;
+    const dist=60+Math.random()*100;
     const tx=Math.cos(angle)*dist;
     const ty=Math.sin(angle)*dist;
-    spark.style.cssText=`left:${x}px;top:${y}px;--tx:${tx}px;--ty:${ty}px;width:6px;height:6px;background:#ffd54f;border-radius:50%;box-shadow:0 0 8px #ff9f1c;`;
-    spark.animate([{opacity:1,transform:'scale(1) translate(0,0)'},{opacity:0,transform:`scale(0) translate(${tx}px,${ty}px)`}],{duration:700,easing:'cubic-bezier(0.2,0.8,0.2,1)'});
+    spark.style.cssText=`left:${x}px;top:${y}px;--tx:${tx}px;--ty:${ty}px;width:8px;height:8px;background:#ffd54f;border-radius:50%;box-shadow:0 0 8px #ff9f1c;`;
+    spark.animate([{opacity:1,transform:'scale(1) translate(0,0)'},{opacity:0,transform:`scale(0) translate(${tx}px,${ty}px)`}],{duration:750,easing:'cubic-bezier(0.2,0.8,0.2,1)'});
     document.body.appendChild(spark);
-    setTimeout(()=>spark.remove(),700);
+    setTimeout(()=>spark.remove(),750);
   }
 }
 
