@@ -9,53 +9,110 @@
 <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
 
 <style>
-:root{
- --bg1:#7fd7ff;--bg2:#b5f1ff;--panel:#fff;--panel-dark:#e6f2ff;
- --outline:#1f3b57;--accent:#ffcc33;--green:#5cff6a;--red:#ff6b6b;
+:root {
+  --bg1:#1c1f26;
+  --bg2:#2a2f3a;
+  --panel:#242836;
+  --panel-dark:#1a1d26;
+  --accent:#ffd54f;
+  --accent2:#ff9f1c;
+  --outline:#0e1118;
 }
-*{box-sizing:border-box;font-family:'Arial Rounded MT Bold','Trebuchet MS',system-ui}
-body{margin:0;background:linear-gradient(180deg,var(--bg2),var(--bg1));color:var(--outline)}
+
+body{
+  margin:0;
+  font-family:'Arial Rounded MT Bold', system-ui, sans-serif;
+  background:radial-gradient(circle at top,#2e3342,#141620);
+  color:#fff;
+  overflow:hidden;
+}
 
 /* TOP BAR */
-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:var(--panel);border-bottom:6px solid var(--outline)}
-header h1{margin:0;font-size:28px;text-shadow:2px 2px 0 var(--outline)}
-.top-right{display:flex;gap:12px;align-items:center}
-.icon-btn{width:44px;height:44px;border-radius:14px;background:var(--panel-dark);border:4px solid var(--outline);cursor:pointer;transition:transform .08s}
-.icon-btn:active{transform:scale(.9) translateY(4px)}
-.currency{background:var(--accent);padding:10px 16px;border-radius:16px;border:4px solid var(--outline);font-size:18px}
+#topBar{
+  position:absolute;top:12px;left:12px;right:12px;height:64px;
+  background:linear-gradient(#2d3242,#1c1f29);
+  border-radius:18px;
+  border:4px solid var(--outline);
+  box-shadow:0 8px 0 #000;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;
+}
 
-/* LAYOUT */
-.game{display:grid;grid-template-columns:1fr 340px;gap:22px;padding:22px;max-width:1200px;margin:auto}
-@media(max-width:900px){.game{grid-template-columns:1fr}}
+#title{font-size:26px;font-weight:900;letter-spacing:1px;}
 
-/* FACTORY */
-.factory{background:var(--panel);border-radius:26px;border:6px solid var(--outline);padding:26px;position:relative;text-align:center}
-.robot{width:240px;height:240px;margin:20px auto;background:linear-gradient(145deg,#d9f3ff,#8ed4ff);border-radius:36px;border:6px solid var(--outline);box-shadow:inset 0 -10px rgba(0,0,0,.15);cursor:pointer;animation:idle 2s ease-in-out infinite}
-.robot.big{width:280px;height:280px}
-.robot:active{transform:scale(.88)}
-@keyframes idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+#money{
+  font-size:22px;
+  background:linear-gradient(#ffd54f,#ffb300);
+  color:#000;
+  padding:10px 18px;
+  border-radius:14px;
+  border:3px solid #000;
+  box-shadow:0 5px 0 #000;
+}
 
-/* PARTICLES */
-.coin{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--accent);pointer-events:none;animation:coin 0.8s ease-out forwards}
-@keyframes coin{to{transform:translate(var(--x),var(--y));opacity:0}}
+/* ICON BUTTONS */
+.icon-btn{
+  width:44px;height:44px;
+  border-radius:12px;
+  background:linear-gradient(#3a4054,#262b3a);
+  border:3px solid #000;
+  box-shadow:0 4px 0 #000;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  transition:.12s;
+}
+.icon-btn:hover{transform:translateY(2px);box-shadow:0 2px 0 #000;}
 
-/* PANELS */
-.panel{background:var(--panel);border-radius:26px;border:6px solid var(--outline);padding:16px;margin-bottom:16px}
-.panel h3{text-align:center;margin:0 0 10px;text-shadow:2px 2px 0 var(--outline)}
-.upgrade{background:var(--panel-dark);border-radius:16px;border:4px solid var(--outline);padding:12px;margin-bottom:10px;cursor:pointer;transition:transform .05s}
-.upgrade:active{transform:translateY(4px)}
-.common{border-color:#999}
-.rare{border-color:#4da6ff}
-.epic{border-color:#b84dff}
+.icon-btn svg{width:24px;height:24px;fill:#ffd54f;}
 
-/* MODALS */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:10}
-.modal-box{background:var(--panel);border:6px solid var(--outline);border-radius:26px;padding:20px;width:320px;text-align:center;animation:pop .2s}
-@keyframes pop{from{transform:scale(.7)}to{transform:scale(1)}}
+/* CENTER CLICKER */
+#robot{
+  position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);
+  width:220px;height:220px;
+  background:radial-gradient(circle at top,#6cf,#148);
+  border-radius:50%;
+  border:6px solid #000;
+  box-shadow:0 18px 0 #000;
+  display:flex;align-items:center;justify-content:center;
+}
 
-.shake{animation:shake .4s}
-@keyframes shake{0%,100%{transform:translate(0)}25%{transform:translate(6px)}75%{transform:translate(-6px)}}
+#robot::after{
+  content:"";
+  position:absolute;bottom:-30px;width:260px;height:40px;
+  background:rgba(0,0,0,.4);
+  filter:blur(12px);
+}
 
+/* UPGRADES PANEL */
+#upgrades{
+  position:absolute;right:16px;top:96px;bottom:16px;width:300px;
+  background:linear-gradient(#2a2f3a,#1b1f29);
+  border-radius:22px;
+  border:4px solid #000;
+  box-shadow:0 10px 0 #000;
+  padding:14px;
+  overflow:hidden;
+}
+
+.upgrade{
+  background:linear-gradient(#3a4154,#262b3a);
+  border:3px solid #000;
+  border-radius:16px;
+  padding:12px;
+  margin-bottom:12px;
+  box-shadow:0 5px 0 #000;
+  transition:.1s;
+}
+.upgrade:hover{transform:translateY(2px);box-shadow:0 3px 0 #000;}
+
+/* DECORATIVE DETAILS */
+.factory-bg{
+  position:absolute;inset:0;
+  background:
+    repeating-linear-gradient(45deg,rgba(255,255,255,.03) 0 10px,transparent 10px 20px),
+    radial-gradient(circle at bottom,#000 0%,transparent 60%);
+  pointer-events:none;
+}
 </style>
 </head>
 <body>
@@ -162,3 +219,125 @@ function watchAd(){if(cg)cg.showRewardedAd({onReward:()=>{bots+=1000;updateUI()}
 </script>
 </body>
 </html>
+
+/* =========================
+   JUICE SYSTEMS (FINAL POLISH)
+   ========================= */
+
+// Screen shake
+let shakeTime = 0;
+function screenShake(intensity = 6, duration = 150) {
+  shakeTime = duration;
+  const start = Date.now();
+  const interval = setInterval(() => {
+    const elapsed = Date.now() - start;
+    if (elapsed > duration) {
+      document.body.style.transform = "";
+      clearInterval(interval);
+      return;
+    }
+    const x = (Math.random() - 0.5) * intensity;
+    const y = (Math.random() - 0.5) * intensity;
+    document.body.style.transform = `translate(${x}px, ${y}px)`;
+  }, 16);
+}
+
+// Click flash + pop
+function clickJuice(el) {
+  el.classList.add('click-pop');
+  setTimeout(() => el.classList.remove('click-pop'), 120);
+}
+
+// Coin burst
+function spawnCoins(x, y, amount = 6) {
+  for (let i = 0; i < amount; i++) {
+    const coin = document.createElement('div');
+    coin.className = 'coin';
+    coin.style.left = x + 'px';
+    coin.style.top = y + 'px';
+    document.body.appendChild(coin);
+
+    const target = document.getElementById('money');
+    const rect = target.getBoundingClientRect();
+
+    const tx = rect.left + rect.width / 2;
+    const ty = rect.top + rect.height / 2;
+
+    coin.animate([
+      { transform: 'translate(0,0) scale(1)', opacity: 1 },
+      { transform: `translate(${tx - x}px, ${ty - y}px) scale(0.3)`, opacity: 0 }
+    ], { duration: 600, easing: 'cubic-bezier(.2,.8,.2,1)' });
+
+    setTimeout(() => coin.remove(), 600);
+  }
+}
+
+// Achievement toast
+function showToast(text) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerText = text;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add('show'), 50);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// Milestone celebration
+function milestoneCelebrate(text) {
+  screenShake(10, 300);
+  const overlay = document.createElement('div');
+  overlay.className = 'milestone';
+  overlay.innerText = text;
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.remove(), 2000);
+}
+
+/* =========================
+   CLICK HANDLER
+   ========================= */
+
+robot.addEventListener('click', (e) => {
+  if (paused) return;
+  bots += clickPower;
+  clickJuice(robot);
+  spawnCoins(e.clientX, e.clientY);
+  screenShake(2, 80);
+  updateUI();
+});
+
+/* =========================
+   REBIRTH JUICE
+   ========================= */
+function rebirth() {
+  screenShake(14, 400);
+  milestoneCelebrate('REBIRTH!');
+  bots = 0;
+  rebirths++;
+  updateUI();
+}
+
+/* =========================
+   DAILY REWARD POP
+   ========================= */
+function dailyReward() {
+  bots += 500;
+  showToast('Daily Reward Claimed! +500 Bots');
+  updateUI();
+}
+
+/* =========================
+   CSS JUICE (APPEND TO STYLE)
+   ========================= */
+
+const style = document.createElement('style');
+style.innerHTML = `
+.click-pop { animation: pop 0.12s ease-out; }
+@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+.coin { position: fixed; width: 12px; height: 12px; background: gold; border-radius: 50%; pointer-events: none; z-index: 9999; }
+.toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) scale(0.8); background: #222; color: #fff; padding: 12px 20px; border-radius: 12px; opacity: 0; transition: all .3s; z-index: 9999; }
+.toast.show { opacity: 1; transform: translateX(-50%) scale(1); }
+.milestone { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 900; background: rgba(0,0,0,0.6); color: #fff; z-index: 9998; animation: fade 2s; }
+@keyframes fade { from { opacity: 1; } to { opacity: 0; } }
+`;
+document.head.appendChild(style);
+
