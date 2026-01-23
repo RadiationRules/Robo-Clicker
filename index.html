@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Robo Clicker</title>
 <meta name="description" content="Robo Clicker – casual cartoony idle clicker game" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
 
@@ -614,65 +617,142 @@ h1 {
 <h1>Robo Clicker</h1>
 <div class="top-right">
 <div class="icon-btn" onclick="openDaily()" title="Daily Reward">
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <g transform="translate(12, 12)">
-      <circle cx="0" cy="0" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/>
-      <path d="M0,-6 L0,0 L4,2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <circle cx="0" cy="0" r="2" fill="currentColor"/>
-    </g>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="3" y="4" width="18" height="18" rx="2"/>
+    <path d="M16 2v4M8 2v4M3 10h18"/>
   </svg>
 </div>
 <div class="icon-btn" onclick="openLeaderboard()" title="Leaderboard">
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <rect x="2" y="10" width="4" height="10" rx="1"/>
-    <rect x="10" y="4" width="4" height="16" rx="1"/>
-    <rect x="18" y="7" width="4" height="13" rx="1"/>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="3" y="12" width="4" height="8" rx="1"/>
+    <rect x="10" y="6" width="4" height="14" rx="1"/>
+    <rect x="17" y="9" width="4" height="11" rx="1"/>
   </svg>
 </div>
 <div class="icon-btn" onclick="openSettings()" title="Settings">
-  <svg viewBox="0 0 24 24" fill="currentColor">
-    <circle cx="12" cy="12" r="2.5"/>
-    <path d="M12,1 L13,6 C14.5,6.2 16,6.8 17.2,7.8 L21.5,5.5 L22.5,9.5 L19.2,11.5 C19.5,12.3 19.7,13.1 19.8,14 L24,15 L23,19 L19.8,18 C19.2,19.3 18.3,20.4 17.2,21.2 L18.5,25.5 L14.5,25.5 L13,21.5 C12.3,21.6 11.7,21.6 11,21.5 L9.5,25.5 L5.5,25.5 L6.8,21.2 C5.7,20.4 4.8,19.3 4.2,18 L1,19 L0,15 L4.2,14 C4.3,13.1 4.5,12.3 4.8,11.5 L1.5,9.5 L2.5,5.5 L6.8,7.8 C8,6.8 9.5,6.2 11,6 Z"/>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m4.24-4.24l4.24-4.24"/>
   </svg>
 </div>
-<div class="currency">🤖 <span id="bots">0</span></div>
+<div class="currency">
+  <span id="bots">0</span>
+</div>
 </div>
 </header>
 
 <div class="game">
 <div class="factory" id="factory">
 <h2>Factory</h2>
-<div class="robot" id="robot"></div>
+<div id="robot">
+  <div class="robot-core"></div>
+</div>
 </div>
 
 <div>
 <div class="panel" style="padding: 0; overflow: hidden; flex: 1; display: flex; flex-direction: column;">
-<h3 style="padding: 20px 20px 12px 20px; margin: 0;">⚡ Upgrades</h3>
+<h3 style="padding: 20px 20px 12px 20px; margin: 0;">Upgrades</h3>
 <div style="overflow-y: auto; padding: 0 12px 12px 12px; flex: 1;">
-<div class="upgrade common" onclick="buyClick()">💪 Stronger Click<br><span style="font-size:13px;">Cost: <span id="clickCost">10</span></span></div>
-<div class="upgrade rare" onclick="buyAuto()">🤖 Auto Builder<br><span style="font-size:13px;">Cost: <span id="autoCost">50</span></span></div>
-<div class="upgrade epic" onclick="buyMega()">💥 Mega Click<br><span style="font-size:13px;">Cost: <span id="megaCost">250</span></span></div>
-<div class="upgrade common" onclick="buyBot()">🦾 Bot Assistant<br><span style="font-size:13px;">Cost: <span id="botCost">100</span></span></div>
-<div class="upgrade rare" onclick="buyMultiplier()">2️⃣ Click Multiplier<br><span style="font-size:13px;">Cost: <span id="multiplierCost">500</span></span></div>
-<div class="upgrade epic" onclick="buySuper()">⭐ Super Bot<br><span style="font-size:13px;">Cost: <span id="superCost">1000</span></span></div>
-<div class="upgrade common" onclick="buyFactory()">🏭 Factory Upgrade<br><span style="font-size:13px;">Cost: <span id="factoryCost">200</span></span></div>
-<div class="upgrade rare" onclick="buyMomentum()">💫 Momentum Boost<br><span style="font-size:13px;">Cost: <span id="momentumCost">750</span></span></div>
-<div class="upgrade epic" onclick="buyLegendary()">👑 Legendary Power<br><span style="font-size:13px;">Cost: <span id="legendaryCost">2500</span></span></div>
+<div class="upgrade" onclick="buyClick()">
+  <span class="upgrade-name">Stronger Click</span>
+  <span class="upgrade-cost"><span id="clickCost">10</span></span>
+</div>
+<div class="upgrade" onclick="buyAuto()">
+  <span class="upgrade-name">Auto Builder</span>
+  <span class="upgrade-cost"><span id="autoCost">50</span></span>
+</div>
+<div class="upgrade" onclick="buyMega()">
+  <span class="upgrade-name">Mega Click</span>
+  <span class="upgrade-cost"><span id="megaCost">250</span></span>
+</div>
+<div class="upgrade" onclick="buyBot()">
+  <span class="upgrade-name">Bot Assistant</span>
+  <span class="upgrade-cost"><span id="botCost">100</span></span>
+</div>
+<div class="upgrade" onclick="buyMultiplier()">
+  <span class="upgrade-name">Click Multiplier</span>
+  <span class="upgrade-cost"><span id="multiplierCost">500</span></span>
+</div>
+<div class="upgrade" onclick="buySuper()">
+  <span class="upgrade-name">Super Bot</span>
+  <span class="upgrade-cost"><span id="superCost">1000</span></span>
+</div>
+<div class="upgrade" onclick="buyFactory()">
+  <span class="upgrade-name">Factory Upgrade</span>
+  <span class="upgrade-cost"><span id="factoryCost">200</span></span>
+</div>
+<div class="upgrade" onclick="buyMomentum()">
+  <span class="upgrade-name">Momentum Boost</span>
+  <span class="upgrade-cost"><span id="momentumCost">750</span></span>
+</div>
+<div class="upgrade" onclick="buyLegendary()">
+  <span class="upgrade-name">Legendary Power</span>
+  <span class="upgrade-cost"><span id="legendaryCost">2500</span></span>
+</div>
 </div>
 </div>
 
-<div class="panel upgrade" onclick="doRebirth()" style="text-align: center; font-size: 18px; cursor:pointer; animation: heartbeat 1.5s ease-in-out infinite; margin-top: 12px;"><span style="font-size:32px;display:block;margin-bottom:8px;">⚡</span>Rebirth<br><span style="font-size:12px;color:#ddd;">Requires 1,000 Bots</span></div>
+<div class="panel upgrade rebirth-btn" onclick="doRebirth()" style="margin-top: 12px;">
+  <span class="upgrade-name">Rebirth</span>
+  <span class="upgrade-cost">1K+</span>
+  <span class="rebirth-subtitle">Restart with bonuses</span>
 </div>
 </div>
+</div>
 
-<!-- DAILY -->
-<div class="modal" id="dailyModal"><div class="modal-box" style="max-width: 520px; padding: 50px;"><h3 style="font-size: 36px;">🎁 Daily Reward</h3><div id="dailyText" style="font-size: 18px; margin: 30px 0; min-height: 100px; display: flex; flex-direction: column; justify-content: center;"></div><div style="margin: 20px 0; padding: 20px; background: rgba(255,213,79,0.1); border-radius: 12px; border-left: 4px solid #ffd54f;"><div style="font-size: 14px; color: #ccc;">Next daily reward in:</div><div id="dailyTimer" style="font-size: 20px; font-weight: 900; color: #ffd54f; margin-top: 8px;">23:59:59</div></div><button onclick="claimDaily()" style="font-size: 18px; padding: 16px 48px; margin-top: 20px;">✨ Claim Reward</button></div></div>
+<!-- DAILY MODAL -->
+<div class="modal" id="dailyModal">
+  <div class="modal-box" style="max-width: 520px;">
+    <h3>Daily Reward</h3>
+    <div id="dailyText" style="font-size: 18px; margin: 30px 0; min-height: 100px; display: flex; flex-direction: column; justify-content: center;"></div>
+    <div style="margin: 20px 0; padding: 20px; background: rgba(0,212,255,0.1); border-radius: 12px; border-left: 4px solid var(--accent-primary);">
+      <div style="font-size: 14px; color: var(--text-secondary);">Next daily reward in:</div>
+      <div id="dailyTimer" style="font-size: 20px; font-weight: 900; color: var(--accent-primary); margin-top: 8px;">23:59:59</div>
+    </div>
+    <button onclick="claimDaily()">Claim Reward</button>
+  </div>
+</div>
 
-<!-- SETTINGS -->
-<div class="modal" id="setModal"><div class="modal-box" style="max-width: 540px; padding: 50px;"><h3 style="font-size: 36px;">⚙️ Settings</h3><div style="margin: 40px 0; text-align: left;"><div style="margin-bottom: 40px;"><div style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #ffd54f;">🔊 Sound & Music</div><div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 12px; background: rgba(255,213,79,0.1); border-radius: 10px;"><label style="font-size: 16px; margin: 0; cursor: pointer;">🔊 Sound Effects</label><input type="checkbox" id="soundToggle" checked style="width: 24px; height: 24px; cursor: pointer; accent-color: #ffd54f;"></div><div style="margin: 20px 0;"><label style="font-size: 14px; color: #ccc; display: block; margin-bottom: 8px;">Sound Volume: <span id="soundVolumeDisplay">100</span>%</label><input type="range" id="soundVolume" min="0" max="100" value="100" style="width: 100%; height: 8px; cursor: pointer; accent-color: #ffd54f;"></div></div><div style="margin-bottom: 30px;"><div style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #ff9f1c;">🎵 Music</div><div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 12px; background: rgba(255,159,28,0.1); border-radius: 10px;"><label style="font-size: 16px; margin: 0; cursor: pointer;">🎵 Background Music</label><input type="checkbox" id="musicToggle" checked style="width: 24px; height: 24px; cursor: pointer; accent-color: #ff9f1c;"></div><div style="margin: 20px 0;"><label style="font-size: 14px; color: #ccc; display: block; margin-bottom: 8px;">Music Volume: <span id="musicVolumeDisplay">100</span>%</label><input type="range" id="musicVolume" min="0" max="100" value="100" style="width: 100%; height: 8px; cursor: pointer; accent-color: #ff9f1c;"></div></div></div><button onclick="closeModals()" style="font-size: 16px; padding: 14px 40px; width: 100%; margin-top: 20px;">Close Settings</button></div></div>
+<!-- SETTINGS MODAL -->
+<div class="modal" id="setModal">
+  <div class="modal-box" style="max-width: 540px;">
+    <h3>Settings</h3>
+    <div style="margin: 40px 0; text-align: left;">
+      <div style="margin-bottom: 40px;">
+        <div style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--accent-primary);">Sound & Music</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 12px; background: rgba(0,212,255,0.1); border-radius: 10px;">
+          <label style="font-size: 16px; margin: 0; cursor: pointer; color: var(--text-primary);">Sound Effects</label>
+          <input type="checkbox" id="soundToggle" checked>
+        </div>
+        <div style="margin: 20px 0;">
+          <label style="font-size: 14px; color: var(--text-secondary); display: block; margin-bottom: 8px;">Sound Volume: <span id="soundVolumeDisplay">100</span>%</label>
+          <input type="range" id="soundVolume" min="0" max="100" value="100">
+        </div>
+      </div>
+      <div style="margin-bottom: 30px;">
+        <div style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--accent-secondary);">Music</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 12px; background: rgba(99,102,241,0.1); border-radius: 10px;">
+          <label style="font-size: 16px; margin: 0; cursor: pointer; color: var(--text-primary);">Background Music</label>
+          <input type="checkbox" id="musicToggle" checked>
+        </div>
+        <div style="margin: 20px 0;">
+          <label style="font-size: 14px; color: var(--text-secondary); display: block; margin-bottom: 8px;">Music Volume: <span id="musicVolumeDisplay">100</span>%</label>
+          <input type="range" id="musicVolume" min="0" max="100" value="100">
+        </div>
+      </div>
+    </div>
+    <button onclick="closeModals()" style="width: 100%;">Close Settings</button>
+  </div>
+</div>
 
-<!-- OFFLINE -->
-<div class="modal" id="offlineModal"><div class="modal-box" style="max-width: 520px; padding: 50px;"><h3 style="font-size: 36px;">👋 Welcome Back!</h3><div id="offlineText" style="font-size: 18px; margin: 30px 0; min-height: 80px; display: flex; align-items: center; justify-content: center;"></div><button onclick="closeModals()" style="font-size: 16px; padding: 14px 40px; margin-top: 20px;">Nice! 🎉</button></div></div>
+<!-- OFFLINE MODAL -->
+<div class="modal" id="offlineModal">
+  <div class="modal-box" style="max-width: 520px;">
+    <h3>Welcome Back!</h3>
+    <div id="offlineText" style="font-size: 18px; margin: 30px 0; min-height: 80px; display: flex; align-items: center; justify-content: center;"></div>
+    <button onclick="closeModals()">Continue</button>
+  </div>
+</div>
 
 <script>
 const cg=window.CrazyGamesSDK; if(cg) cg.init();
