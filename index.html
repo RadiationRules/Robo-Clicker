@@ -1,353 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Bot Factory Simulator 3D</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Robo Clicker</title>
+<meta name="description" content="Robo Clicker – casual cartoony idle clicker game" />
+
+<script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+
 <style>
-/* --- GENERAL --- */
-body, html {
-  margin:0; padding:0;
-  width:100%; height:100%;
-  font-family: 'Arial', sans-serif;
-  background:#1b1b2f;
-  overflow-x:hidden;
-  touch-action: manipulation;
-  user-select:none;
+:root{
+ --bg1:#7fd7ff;--bg2:#b5f1ff;--panel:#fff;--panel-dark:#e6f2ff;
+ --outline:#1f3b57;--accent:#ffcc33;--green:#5cff6a;--red:#ff6b6b;
 }
+*{box-sizing:border-box;font-family:'Arial Rounded MT Bold','Trebuchet MS',system-ui}
+body{margin:0;background:linear-gradient(180deg,var(--bg2),var(--bg1));color:var(--outline)}
 
-/* --- BACKGROUND --- */
-#background {
-  position:fixed; top:0; left:0;
-  width:100%; height:100%;
-  background: linear-gradient(90deg,#1b1b2f,#2b2b3f);
-  overflow:hidden;
-  z-index:-1;
-}
+/* TOP BAR */
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:var(--panel);border-bottom:6px solid var(--outline)}
+header h1{margin:0;font-size:28px;text-shadow:2px 2px 0 var(--outline)}
+.top-right{display:flex;gap:12px;align-items:center}
+.icon-btn{width:44px;height:44px;border-radius:14px;background:var(--panel-dark);border:4px solid var(--outline);cursor:pointer;transition:transform .08s}
+.icon-btn:active{transform:scale(.9) translateY(4px)}
+.currency{background:var(--accent);padding:10px 16px;border-radius:16px;border:4px solid var(--outline);font-size:18px}
 
-/* Floating gears/particles */
-.gear {
-  position:absolute;
-  border-radius:50%;
-  background:#33f;
-  opacity:0.3;
-  animation: float 5s linear infinite;
-}
-@keyframes float { 0%{transform:translateY(110%);} 100%{transform:translateY(-10%);} }
+/* LAYOUT */
+.game{display:grid;grid-template-columns:1fr 340px;gap:22px;padding:22px;max-width:1200px;margin:auto}
+@media(max-width:900px){.game{grid-template-columns:1fr}}
 
-/* --- STATS PANEL --- */
-#stats {
-  display:flex; justify-content:space-around; margin:10px auto;
-  width:90%;
-}
-.stat-box {
-  flex:1;
-  margin:0 5px;
-  padding:15px;
-  background: linear-gradient(145deg,#0f0f2f,#333366);
-  border-radius:15px;
-  color:#0ff;
-  font-weight:bold;
-  text-shadow: 2px 2px 0 #000;
-  box-shadow: 0 0 15px #33f;
-  min-width:90px;
-  text-align:center;
-  font-size:16px;
-  transition:0.2s;
-}
+/* FACTORY */
+.factory{background:var(--panel);border-radius:26px;border:6px solid var(--outline);padding:26px;position:relative;text-align:center}
+.robot{width:240px;height:240px;margin:20px auto;background:linear-gradient(145deg,#d9f3ff,#8ed4ff);border-radius:36px;border:6px solid var(--outline);box-shadow:inset 0 -10px rgba(0,0,0,.15);cursor:pointer;animation:idle 2s ease-in-out infinite}
+.robot.big{width:280px;height:280px}
+.robot:active{transform:scale(.88)}
+@keyframes idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 
-/* --- MACHINE CONTROLLER BUTTON --- */
-#clickBot {
-  display:block;
-  margin:20px auto;
-  width:160px; height:160px;
-  border:none;
-  border-radius:20px;
-  background: linear-gradient(145deg,#0ff,#33f);
-  box-shadow:0 0 35px #0ff, inset 0 0 15px #00f;
-  font-size:22px; color:#fff;
-  font-weight:bold;
-  text-shadow:2px 2px 0 #000;
-  transition:0.1s;
-}
-#clickBot:active {
-  transform:scale(0.95);
-  box-shadow:0 0 50px #0ff, inset 0 0 25px #00f;
-}
+/* PARTICLES */
+.coin{position:absolute;width:12px;height:12px;border-radius:50%;background:var(--accent);pointer-events:none;animation:coin 0.8s ease-out forwards}
+@keyframes coin{to{transform:translate(var(--x),var(--y));opacity:0}}
 
-/* --- CONVEYOR BELT --- */
-.conveyor {
-  position:relative;
-  margin:20px auto;
-  width:90%;
-  height:100px;
-  background: repeating-linear-gradient(90deg,#222244 0 40px,#333366 40px 80px);
-  border-radius:15px;
-  overflow:hidden;
-  box-shadow: 0 0 20px #33f;
-}
+/* PANELS */
+.panel{background:var(--panel);border-radius:26px;border:6px solid var(--outline);padding:16px;margin-bottom:16px}
+.panel h3{text-align:center;margin:0 0 10px;text-shadow:2px 2px 0 var(--outline)}
+.upgrade{background:var(--panel-dark);border-radius:16px;border:4px solid var(--outline);padding:12px;margin-bottom:10px;cursor:pointer;transition:transform .05s}
+.upgrade:active{transform:translateY(4px)}
+.common{border-color:#999}
+.rare{border-color:#4da6ff}
+.epic{border-color:#b84dff}
 
-/* --- BOT SPRITES --- */
-.botSprite {
-  position:absolute;
-  width:28px; height:28px;
-  background: linear-gradient(145deg,#0ff,#00f);
-  border-radius:50%;
-  box-shadow: 2px 2px 0 #000, 0 0 10px #0ff;
-  top:36px;
-}
+/* MODALS */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:10}
+.modal-box{background:var(--panel);border:6px solid var(--outline);border-radius:26px;padding:20px;width:320px;text-align:center;animation:pop .2s}
+@keyframes pop{from{transform:scale(.7)}to{transform:scale(1)}}
 
-/* --- UPGRADE CARDS --- */
-#upgrades {
-  display:flex; flex-direction:column; gap:10px;
-  width:90%; margin:20px auto;
-}
-.upgrade {
-  padding:12px;
-  background: linear-gradient(145deg,#0f0f2f,#222244);
-  border:2px solid #33f;
-  border-radius:15px;
-  color:#0ff;
-  text-align:center;
-  font-weight:bold;
-  font-size:16px;
-  text-shadow:2px 2px 0 #000;
-  box-shadow:0 0 20px #33f;
-  cursor:pointer;
-  transition:0.2s;
-}
-.upgrade:hover {
-  transform:scale(1.05);
-  box-shadow:0 0 35px #0ff;
-}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translate(0)}25%{transform:translate(6px)}75%{transform:translate(-6px)}}
 
-/* --- PRESTIGE BUTTON --- */
-#prestige {
-  width:90%; margin:20px auto; padding:15px;
-  background: linear-gradient(145deg,#0ff,#33f);
-  border:none;
-  border-radius:20px;
-  color:#111;
-  font-weight:bold;
-  font-size:18px;
-  text-shadow:2px 2px 0 #000;
-  box-shadow:0 0 30px #0ff;
-}
-
-/* --- FLOATING TEXT --- */
-.float-text {
-  position:absolute;
-  font-weight:bold;
-  color:#0ff;
-  pointer-events:none;
-  user-select:none;
-  text-shadow:2px 2px 0 #000;
-  animation: floatUp 1s forwards;
-}
-@keyframes floatUp { 0%{opacity:1; transform:translateY(0) scale(1);} 100%{opacity:0; transform:translateY(-80px) scale(1.5);} }
-
-/* --- FLYING COINS --- */
-.coin {
-  position:absolute;
-  width:18px; height:18px;
-  background: radial-gradient(circle,#ff0,#cc0);
-  border-radius:50%;
-  pointer-events:none;
-  box-shadow:2px 2px 0 #000,0 0 10px #ff0;
-}
 </style>
 </head>
 <body>
-<div id="background"></div>
+<header>
+<h1>Robo Clicker</h1>
+<div class="top-right">
+<div class="icon-btn" onclick="openDaily()"></div>
+<div class="icon-btn" onclick="openAchievements()"></div>
+<div class="icon-btn" onclick="openLeaderboard()"></div>
+<div class="icon-btn" onclick="openSettings()"></div>
+<div class="currency">Bots: <span id="bots">0</span></div>
+</div>
+</header>
 
-<div id="game-container">
-  <h1 style="text-align:center; color:#0ff; text-shadow:3px 3px 0 #000;">Bot Factory Simulator 3D</h1>
-
-  <div id="stats">
-    <div class="stat-box">Bots: <span id="botCount">0</span></div>
-    <div class="stat-box">Coins: <span id="coinCount">0</span></div>
-  </div>
-
-  <button id="clickBot">Activate Machine</button>
-
-  <div class="conveyor" id="conveyor"></div>
-
-  <div id="upgrades">
-    <div class="upgrade" id="upgradeClick">Increase Click (+1) - Cost: <span id="upgradeClickCost">10</span> coins</div>
-    <div class="upgrade" id="upgradeIdle">Increase Idle (+1/sec) - Cost: <span id="upgradeIdleCost">20</span> coins</div>
-    <div class="upgrade" id="prestige">Prestige x2 - Req: <span id="prestigeReq">50 bots</span></div>
-  </div>
+<div class="game">
+<div class="factory" id="factory">
+<h2>Factory</h2>
+<div class="robot" id="robot"></div>
 </div>
 
+<div>
+<div class="panel">
+<h3>Upgrades</h3>
+<div class="upgrade common" onclick="buyClick()">Stronger Click<br>Cost: <span id="clickCost">10</span></div>
+<div class="upgrade rare" onclick="buyAuto()">Auto Builder<br>Cost: <span id="autoCost">50</span></div>
+<div class="upgrade epic" onclick="buyMega()">Mega Click<br>Cost: <span id="megaCost">250</span></div>
+</div>
+
+<div class="panel">
+<h3>Progress</h3>
+<div>Milestone: <span id="milestone">1</span></div>
+<div>Achievements: <span id="achCount">0</span></div>
+</div>
+
+<div class="panel upgrade" onclick="doRebirth()">Rebirth<br><small>Requires 1,000 Bots</small></div>
+</div>
+</div>
+
+<!-- DAILY -->
+<div class="modal" id="dailyModal"><div class="modal-box"><h3>Daily Reward</h3><div id="dailyText"></div><br><button onclick="claimDaily()">Claim</button></div></div>
+<!-- ACHIEVEMENTS -->
+<div class="modal" id="achModal"><div class="modal-box"><h3>Achievements</h3><div id="achList"></div><br><button onclick="closeModals()">Close</button></div></div>
+<!-- SETTINGS -->
+<div class="modal" id="setModal"><div class="modal-box"><h3>Settings</h3><label><input type="checkbox" id="soundToggle" checked> Sound</label><br><br><button onclick="closeModals()">Close</button></div></div>
+<!-- OFFLINE -->
+<div class="modal" id="offlineModal"><div class="modal-box"><h3>Welcome Back</h3><div id="offlineText"></div><br><button onclick="closeModals()">Nice!</button></div></div>
+
 <script>
-// --- GAME STATE ---
-let game = {
-  bots:0,
-  coins:0,
-  clickPower:1,
-  idlePower:0,
-  prestigeMultiplier:1,
-  upgradeClickCost:10,
-  upgradeIdleCost:20,
-  prestigeReq:50
-};
+const cg=window.CrazyGamesSDK; if(cg) cg.init();
+let bots=0,perClick=1,autoBots=0,megaClick=0,clickCost=10,autoCost=50,megaCost=250,rebirths=0;
+let milestone=1,achievements={click100:false,bots1k:false};
+let sound=true;
 
-// DOM Elements
-const botCountEl = document.getElementById("botCount");
-const coinCountEl = document.getElementById("coinCount");
-const clickBtn = document.getElementById("clickBot");
-const upgradeClickBtn = document.getElementById("upgradeClick");
-const upgradeIdleBtn = document.getElementById("upgradeIdle");
-const prestigeBtn = document.getElementById("prestige");
-const upgradeClickCostEl = document.getElementById("upgradeClickCost");
-const upgradeIdleCostEl = document.getElementById("upgradeIdleCost");
-const prestigeReqEl = document.getElementById("prestigeReq");
-const conveyor = document.getElementById("conveyor");
+const clickSound=new Audio('https://assets.mixkit.co/sfx/preview/mixkit-soft-click-1124.mp3');clickSound.volume=.4;
+const el=i=>document.getElementById(i);
 
-// --- LOAD GAME ---
-if(localStorage.getItem("botFactoryGame")){
-  game = JSON.parse(localStorage.getItem("botFactoryGame"));
-  updateDisplay();
+function updateUI(){
+ el('bots').textContent=Math.floor(bots);
+ el('clickCost').textContent=clickCost;
+ el('autoCost').textContent=autoCost;
+ el('megaCost').textContent=megaCost;
+ el('milestone').textContent=milestone;
+ el('achCount').textContent=Object.values(achievements).filter(v=>v).length;
+ save();
 }
 
-// --- CLICK MACHINE ---
-clickBtn.addEventListener("click", ()=>{
-  addBots(game.clickPower*game.prestigeMultiplier);
-  spawnBot();
-});
-
-// --- ADD BOTS ---
-function addBots(amount){
-  game.bots += amount;
-  game.coins += amount;
-  createFloatingText(`+${amount}`, clickBtn);
-  flyCoins(amount);
-  updateDisplay();
+robot.onclick=e=>{
+ bots+=perClick+megaClick;
+ burst(e.clientX,e.clientY);
+ if(sound){clickSound.currentTime=0;clickSound.play()}
+ checkAchievements();updateUI();
 }
 
-// --- FLOATING TEXT ---
-function createFloatingText(text,target){
-  const el = document.createElement("div");
-  el.className="float-text";
-  el.textContent=text;
-  const rect = target.getBoundingClientRect();
-  el.style.left=(rect.left+rect.width/2-20)+"px";
-  el.style.top=(rect.top-30)+"px";
-  document.body.appendChild(el);
-  setTimeout(()=>el.remove(),1000);
-}
+function buyClick(){if(bots>=clickCost){bots-=clickCost;perClick++;clickCost*=1.6;updateUI()}}
+function buyAuto(){if(bots>=autoCost){bots-=autoCost;autoBots++;autoCost*=2;updateUI()}}
+function buyMega(){if(bots>=megaCost){bots-=megaCost;megaClick+=5;megaCost*=2.5;updateUI()}}
 
-// --- FLYING COINS ---
-function flyCoins(amount){
-  const rect = clickBtn.getBoundingClientRect();
-  for(let i=0;i<Math.min(amount,10);i++){
-    const coin = document.createElement("div");
-    coin.className="coin";
-    coin.style.left=(rect.left+rect.width/2)+"px";
-    coin.style.top=(rect.top+rect.height/2)+"px";
-    document.body.appendChild(coin);
-    animateCoin(coin);
-  }
-}
-function animateCoin(coin){
-  const targetRect = coinCountEl.getBoundingClientRect();
-  const dx = targetRect.left - parseFloat(coin.style.left);
-  const dy = targetRect.top - parseFloat(coin.style.top);
-  let posX=parseFloat(coin.style.left), posY=parseFloat(coin.style.top);
-  let step =0;
-  function move(){
-    posX+=dx*0.05; posY+=dy*0.05; step+=0.05;
-    coin.style.left=posX+"px";
-    coin.style.top=posY+"px";
-    if(step<1) requestAnimationFrame(move); else coin.remove();
-  }
-  move();
-}
+setInterval(()=>{bots+=autoBots;checkMilestones();updateUI()},1000);
 
-// --- SPAWN BOT ON CONVEYOR ---
-function spawnBot(){
-  const bot = document.createElement("div");
-  bot.className="botSprite";
-  bot.style.left="0px";
-  bot.style.top=(Math.random()*50+25)+"px";
-  conveyor.appendChild(bot);
-  let pos=0;
-  const speed=2+Math.random()*2;
-  function move(){
-    pos+=speed;
-    bot.style.left=pos+"px";
-    if(pos>conveyor.offsetWidth){
-      bot.remove();
-      flyCoins(1);
-      return;
-    }
-    requestAnimationFrame(move);
-  }
-  move();
-}
+function doRebirth(){if(bots>=1000){rebirths++;bots=0;perClick=1;autoBots=0;megaClick=0;document.body.classList.add('shake');setTimeout(()=>document.body.classList.remove('shake'),400);updateUI()}}
 
-// --- UPGRADES ---
-upgradeClickBtn.addEventListener("click",()=>{
-  if(game.coins>=game.upgradeClickCost){
-    game.coins-=game.upgradeClickCost;
-    game.clickPower+=1;
-    game.upgradeClickCost=Math.floor(game.upgradeClickCost*1.5);
-    updateDisplay();
-  }
-});
-upgradeIdleBtn.addEventListener("click",()=>{
-  if(game.coins>=game.upgradeIdleCost){
-    game.coins-=game.upgradeIdleCost;
-    game.idlePower+=1;
-    game.upgradeIdleCost=Math.floor(game.upgradeIdleCost*1.5);
-    updateDisplay();
-  }
-});
-prestigeBtn.addEventListener("click",()=>{
-  if(game.bots>=game.prestigeReq){
-    game.bots=0; game.coins=0;
-    game.clickPower=1; game.idlePower=0;
-    game.prestigeMultiplier*=2;
-    game.upgradeClickCost=10;
-    game.upgradeIdleCost=20;
-    updateDisplay();
-    alert(`Prestige activated! Multiplier is now x${game.prestigeMultiplier}`);
-  }
-});
+function burst(x,y){for(let i=0;i<10;i++){const c=document.createElement('div');c.className='coin';c.style.left=x+'px';c.style.top=y+'px';c.style.setProperty('--x',(Math.random()*120-60)+'px');c.style.setProperty('--y',(Math.random()*-120)+'px');document.body.appendChild(c);setTimeout(()=>c.remove(),800)}}
 
-// --- IDLE PRODUCTION ---
-setInterval(()=>{
-  if(game.idlePower>0){
-    addBots(game.idlePower*game.prestigeMultiplier);
-    spawnBot();
-  }
-},1000);
+function checkMilestones(){if(bots>1000&&milestone===1){milestone=2;el('robot').classList.add('big')}}
+function checkAchievements(){if(bots>=1000)achievements.bots1k=true}
 
-// --- UPDATE DISPLAY ---
-function updateDisplay(){
-  botCountEl.textContent=game.bots;
-  coinCountEl.textContent=game.coins;
-  upgradeClickCostEl.textContent=game.upgradeClickCost;
-  upgradeIdleCostEl.textContent=game.upgradeIdleCost;
-  prestigeReqEl.textContent=game.prestigeReq;
-  saveGame();
-}
+// DAILY
+function openDaily(){el('dailyModal').style.display='flex';el('dailyText').textContent='Reward: +500 Bots'}
+function claimDaily(){bots+=500;closeModals();updateUI()}
 
-// --- SAVE GAME ---
-function saveGame(){
-  localStorage.setItem("botFactoryGame",JSON.stringify(game));
-}
+// MODALS
+function openAchievements(){el('achModal').style.display='flex';el('achList').innerHTML=Object.entries(achievements).map(([k,v])=>`${k}: ${v?'Done':'?'}`).join('<br>')}
+function openSettings(){el('setModal').style.display='flex'}
+function openLeaderboard(){if(cg)cg.showLeaderboard({leaderboardID:'main'})}
+function closeModals(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none')}
 
-// --- BACKGROUND GEARS ---
-for(let i=0;i<20;i++){
-  const g = document.createElement("div");
-  g.className="gear";
-  g.style.left=Math.random()*100+"%";
-  g.style.width=(10+Math.random()*20)+"px";
-  g.style.height=g.style.width;
-  g.style.animationDuration=(5+Math.random()*10)+"s";
-  document.body.appendChild(g);
-}
+// SAVE + OFFLINE
+function save(){localStorage.setItem('save',JSON.stringify({bots,perClick,autoBots,megaClick,clickCost,autoCost,megaCost,milestone,achievements,time:Date.now()}))}
+function load(){const d=JSON.parse(localStorage.getItem('save'));if(!d)return;Object.assign({bots,perClick,autoBots,megaClick,clickCost,autoCost,megaCost,milestone,achievements},d);const diff=Math.floor((Date.now()-d.time)/1000);const earned=diff*autoBots;if(earned>0){bots+=earned;el('offlineText').textContent=`You earned ${earned} Bots while away!`;el('offlineModal').style.display='flex'}}
+load();updateUI();
+
+// REWARDED AD
+function watchAd(){if(cg)cg.showRewardedAd({onReward:()=>{bots+=1000;updateUI()}})}
 </script>
 </body>
 </html>
