@@ -1,1160 +1,348 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Robo Clicker</title>
-<meta name="description" content="Robo Clicker – casual cartoony idle clicker game" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-<script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
-
-<style>
-:root {
-  --bg1:#5a7a9a;
-  --bg2:#7a9aba;
-  --bg3:#9abbcc;
-  --panel:#7a9aba;
-  --accent:#ffd54f;
-  --accent2:#ff9f1c;
-  --accent3:#64b5f6;
-  --outline:#3a5a7a;
-  --success:#4caf50;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  background: linear-gradient(135deg, #6a8aaa 0%, #8aaaca 50%, #5a7a9a 100%);
-  color: #fff;
-  overflow: hidden;
-  height: 100vh;
-  font-weight: 500;
-}
-
-/* ANIMATIONS */
-@keyframes float { 0%, 100% { transform: translateY(-8px); } 50% { transform: translateY(0); } }
-@keyframes glow { 0%, 100% { filter: drop-shadow(0 0 4px rgba(255,213,79,0.3)); } 50% { filter: drop-shadow(0 0 12px rgba(255,213,79,0.6)); } }
-@keyframes pop { 0% { transform: scale(0.5) rotate(-10deg); opacity: 1; } 100% { transform: scale(1.3) rotate(5deg); opacity: 0; } }
-@keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-@keyframes shake { 0%, 100% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(-3px, -3px) rotate(-0.5deg); } 75% { transform: translate(3px, 3px) rotate(0.5deg); } }
-@keyframes coinFloat { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(0); opacity: 0; } }
-@keyframes fadeInScale { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-@keyframes ripple { 0% { transform: scale(0); opacity: 0.8; } 100% { transform: scale(2.5); opacity: 0; } }
-@keyframes clickExplode { 0% { transform: scale(1) rotate(0deg); opacity: 1; } 100% { transform: scale(1.8) rotate(180deg); opacity: 0; } }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-@keyframes wiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-3deg); } 75% { transform: rotate(3deg); } }
-@keyframes heartbeat { 0%, 100% { transform: scale(1); } 25% { transform: scale(1.2); } 50% { transform: scale(1); } }
-@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-@keyframes scaleUp { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-@keyframes glow { 0%, 100% { filter: drop-shadow(0 0 8px rgba(255,213,79,0.4)); } 50% { filter: drop-shadow(0 0 16px rgba(255,213,79,0.8)); } }
-
-@keyframes robotPulse { 0%, 100% { box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), inset -12px -12px 36px rgba(0, 0, 0, 0.3), inset 12px 12px 36px rgba(255, 255, 255, 0.2), 0 0 50px rgba(100, 181, 246, 0.4); } 50% { box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), inset -12px -12px 36px rgba(0, 0, 0, 0.3), inset 12px 12px 36px rgba(255, 255, 255, 0.2), 0 0 80px rgba(100, 181, 246, 0.7); } }
-
-/* TOP BAR */
-header {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 12px;
-  height: 90px;
-  background: linear-gradient(135deg, #7a9aba 0%, #8aaaca 100%);
-  border-radius: 20px;
-  border: 3px solid rgba(255, 213, 79, 0.4);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), inset 0 2px 6px rgba(255, 255, 255, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 36px;
-  z-index: 100;
-  backdrop-filter: blur(8px);
-}
-
-h1 {
-  font-size: 36px;
-  font-weight: 900;
-  letter-spacing: 3px;
-  margin: 0;
-  background: linear-gradient(135deg, #ffd54f, #ff9f1c, #ff6b6b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 
-    0 2px 0 rgba(0, 0, 0, 0.3),
-    0 0 20px rgba(255, 213, 79, 0.4);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-  animation: float 3s ease-in-out infinite, pulse-glow 2s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0%, 100% { text-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 213, 79, 0.4); }
-  50% { text-shadow: 0 2px 0 rgba(0, 0, 0, 0.3), 0 0 30px rgba(255, 213, 79, 0.6); }
-}
-
-.top-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-#bots, .currency {
-  font-size: 56px;
-  font-weight: 900;
-  background: linear-gradient(135deg, #ff6b6b, #ff9f1c, #ffd54f);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: 2px;
-  text-shadow: 
-    0 2px 0 rgba(0, 0, 0, 0.2),
-    0 0 30px rgba(255, 159, 28, 0.5);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
-  animation: pulse 1.5s ease-in-out infinite, counterGlow 2s ease-in-out infinite;
-  min-width: 200px;
-}
-
-@keyframes counterGlow {
-  0%, 100% { text-shadow: 0 2px 0 rgba(0, 0, 0, 0.2), 0 0 30px rgba(255, 159, 28, 0.5); }
-  50% { text-shadow: 0 2px 0 rgba(0, 0, 0, 0.2), 0 0 50px rgba(255, 159, 28, 0.9); }
-}
-
-/* ICON BUTTONS */
-.icon-btn {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #8aaaca, #9abbcc);
-  border: 2px solid rgba(255, 213, 79, 0.5);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  font-size: 24px;
-  position: relative;
-  overflow: hidden;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
-}
-
-.icon-btn::before {
-  content: "";
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, rgba(255, 213, 79, 0.4) 0%, transparent 70%);
-  transform: scale(0);
-  pointer-events: none;
-  transition: transform 0.4s ease-out;
-}
-
-.icon-btn:hover {
-  transform: scale(1.08);
-  box-shadow: 0 6px 16px rgba(255, 213, 79, 0.3), inset 0 1px 3px rgba(255, 255, 255, 0.4);
-  border-color: rgba(255, 213, 79, 0.7);
-  background: linear-gradient(135deg, #9abbcc, #aaccdd);
-}
-
-.icon-btn:hover::before {
-  transform: scale(2);
-}
-
-.icon-btn:active {
-  transform: scale(0.98);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-}
-
-.icon-btn svg {
-  width: 28px;
-  height: 28px;
-  fill: #ffd54f;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-}
-
-/* CENTER CLICKER - ROBOT */
-#robot {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle at 30% 20%, #87ceeb 0%, #4fb3ff 30%, #0066cc 80%, #004499 100%);
-  border-radius: 50%;
-  border: 12px solid rgba(0, 0, 0, 0.3);
-  box-shadow: 
-    0 20px 50px rgba(0, 0, 0, 0.4),
-    inset -12px -12px 36px rgba(0, 0, 0, 0.3),
-    inset 12px 12px 36px rgba(255, 255, 255, 0.2),
-    0 0 50px rgba(100, 181, 246, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.12s ease-out;
-  animation: float 4s ease-in-out infinite, robotPulse 2s ease-in-out infinite;
-  position: relative;
-  overflow: visible;
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35));
-}
-
-@keyframes robotClick {
-  0% { transform: translate(-50%, -50%) scale(1); }
-  50% { transform: translate(-50%, -50%) scale(0.92); }
-  100% { transform: translate(-50%, -50%) scale(1); }
-}
-
-#robot::before {
-  content: "";
-  position: absolute;
-  inset: 15%;
-  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-#robot .click-ring {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border: 3px solid rgba(255, 213, 79, 0.6);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-#robot:hover {
-  transform: translate(-50%, -50%) scale(1.08);
-  box-shadow: 0 24px 48px rgba(76, 175, 255, 0.4), inset -12px -12px 36px rgba(0, 0, 0, 0.3), inset 12px 12px 36px rgba(255, 255, 255, 0.3);
-  animation: float 4s ease-in-out infinite;
-}
-
-#robot:active {
-  transform: translate(-50%, -50%) scale(0.95);
-}
-
-#robot::after {
-  content: "";
-  position: absolute;
-  bottom: -40px;
-  width: 320px;
-  height: 50px;
-  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.5) 0%, transparent 70%);
-  filter: blur(16px);
-  pointer-events: none;
-}
-
-/* GAME CONTAINER */
-.game {
-  position: absolute;
-  inset: 96px 12px 12px 12px;
-  display: flex;
-  gap: 12px;
-}
-
-.factory {
-  flex: 1;
-  background: linear-gradient(135deg, rgba(122, 154, 170, 0.5), rgba(154, 186, 202, 0.5));
-  border-radius: 18px;
-  border: 3px solid rgba(255, 213, 79, 0.2);
-  backdrop-filter: blur(8px);
-  overflow: hidden;
-  position: relative;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-.factory h2 {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  font-size: 28px;
-  margin: 0;
-  font-weight: 900;
-  background: linear-gradient(135deg, #ffd54f, #ff9f1c);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: 1.5px;
-  text-shadow: 
-    0 1px 0 rgba(0, 0, 0, 0.4),
-    0 2px 4px rgba(0, 0, 0, 0.3);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-}
-
-/* PANELS */
-.panel {
-  background: linear-gradient(135deg, #7a9aba 0%, #8aaaca 100%);
-  border-radius: 18px;
-  border: 2px solid rgba(255, 213, 79, 0.3);
-  padding: 20px;
-  margin-bottom: 14px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12), inset 0 1px 3px rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
-  animation: slideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  transition: all 0.3s ease;
-}
-
-.panel h3 {
-  font-size: 18px;
-  margin: 0 0 14px 0;
-  font-weight: 900;
-  background: linear-gradient(135deg, #ffd54f, #ff9f1c, #ff6b6b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-}
-
-/* UPGRADE BUTTONS */
-.upgrade {
-  background: linear-gradient(135deg, #6a8aaa 0%, #5a7a9a 100%);
-  border: 2px solid rgba(255, 213, 79, 0.35);
-  border-radius: 16px;
-  padding: 16px 18px;
-  margin-bottom: 14px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 2px rgba(255, 255, 255, 0.15);
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  line-height: 1.5;
-  position: relative;
-  overflow: hidden;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
-}
-
-.upgrade::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transition: left 0.5s;
-}
-
-.upgrade:hover::before {
-  left: 100%;
-}
-
-.upgrade:hover {
-  transform: scale(1.04);
-  border-color: rgba(255, 213, 79, 0.6);
-  box-shadow: 0 6px 16px rgba(255, 213, 79, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.2);
-  background: linear-gradient(135deg, #7a9aba 0%, #6a8aaa 100%);
-}
-
-.upgrade:active {
-  transform: scale(0.98);
-  box-shadow: 0 2px 8px rgba(255, 213, 79, 0.1);
-}
-
-.upgrade span {
-  color: #64b5f6;
-  font-weight: 900;
-  background: linear-gradient(135deg, #64b5f6, #42a5f5);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.upgrade-description {
-  font-size: 11px;
-  color: #a8d5ff;
-  margin-top: 4px;
-  opacity: 0.85;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-}
-
-.upgrade-name {
-  font-size: 15px;
-  font-weight: 900;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  background: linear-gradient(135deg, #ffd54f, #ff9f1c);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  display: block;
-  margin-bottom: 2px;
-}
-
-.upgrade-cost {
-  font-size: 13px;
-  font-weight: 800;
-  color: #4caf50;
-  text-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
-  letter-spacing: 1px;
-}
-
-.rebirth-btn {
-  background: linear-gradient(135deg, #6a5aaa 0%, #5a4a9a 100%) !important;
-  border-color: rgba(200, 150, 255, 0.4) !important;
-  animation: heartbeat 1.5s ease-in-out infinite;
-}
-
-.rebirth-btn:hover {
-  background: linear-gradient(135deg, #7a6aba 0%, #6a5aaa 100%) !important;
-  border-color: rgba(200, 150, 255, 0.7) !important;
-  box-shadow: 0 6px 16px rgba(200, 150, 255, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.2) !important;
-}
-
-.rebirth-subtitle {
-  display: block;
-  font-size: 12px;
-  color: #d8b3ff;
-  margin-top: 6px;
-  opacity: 0.8;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-/* RIGHT SIDEBAR */
-.game > div:last-child {
-  width: 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.game > div:last-child::-webkit-scrollbar {
-  width: 6px;
-}
-
-.game > div:last-child::-webkit-scrollbar-track {
-  background: rgba(255, 213, 79, 0.05);
-  border-radius: 3px;
-}
-
-.game > div:last-child::-webkit-scrollbar-thumb {
-  background: rgba(255, 213, 79, 0.2);
-  border-radius: 3px;
-}
-
-.game > div:last-child::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 213, 79, 0.4);
-}
-
-/* MODAL */
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  backdrop-filter: blur(4px);
-  animation: fadeInScale 0.3s ease-out;
-}
-
-.modal-box {
-  background: linear-gradient(135deg, #7a9aba 0%, #8aaaca 100%);
-  border: 3px solid rgba(255, 213, 79, 0.4);
-  border-radius: 20px;
-  padding: 40px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
-  max-width: 480px;
-  text-align: center;
-  animation: slideIn 0.3s ease-out;
-}
-
-.modal-box h3 {
-  font-size: 28px;
-  margin: 0 0 18px 0;
-  font-weight: 900;
-  background: linear-gradient(135deg, #ffd54f, #ff9f1c, #ff6b6b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: 2px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-}
-
-#achList, #dailyText, #offlineText {
-  font-size: 16px;
-  line-height: 2;
-  color: #e8e8e8;
-  margin: 14px 0;
-  font-weight: 600;
-}
-
-.modal-box button {
-  background: linear-gradient(135deg, #ffd54f, #ff9f1c);
-  border: none;
-  color: #1a1a1a;
-  padding: 14px 32px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 900;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(255, 213, 79, 0.4);
-  transition: all 0.3s;
-  letter-spacing: 1px;
-}
-
-.modal-box button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 213, 79, 0.5);
-}
-
-.modal-box button:active {
-  transform: translateY(0);
-}
-
-/* SETTINGS */
-#setModal label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-#setModal input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  accent-color: #ffd54f;
-}
-
-/* COINS & EFFECTS */
-.coin {
-  position: fixed;
-  width: 16px;
-  height: 16px;
-  background: radial-gradient(circle at 30% 30%, #ffed4e, #ffd54f);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 999;
-  box-shadow: 0 0 8px rgba(255, 213, 79, 0.8), inset -1px -1px 3px rgba(0, 0, 0, 0.3);
-  animation: coinFloat 0.8s ease-out forwards;
-}
-
-.particle {
-  position: fixed;
-  pointer-events: none;
-  z-index: 998;
-}
-
-.particle.spark {
-  width: 4px;
-  height: 4px;
-  background: #ffd54f;
-  border-radius: 50%;
-  box-shadow: 0 0 4px #ff9f1c;
-  animation: sparkFly 0.6s ease-out forwards;
-}
-
-@keyframes sparkFly {
-  0% { opacity: 1; }
-  100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
-}
-
-/* TOAST NOTIFICATIONS */
-.toast {
-  position: fixed;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: linear-gradient(135deg, #4a5a6a, #5a6a7a);
-  color: #ffd54f;
-  padding: 18px 32px;
-  border-radius: 16px;
-  border: 2px solid rgba(255, 213, 79, 0.7);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 28px rgba(255, 213, 79, 0.35);
-  opacity: 0;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  z-index: 999;
-  font-weight: 800;
-  letter-spacing: 1px;
-  font-size: 16px;
-}
-
-.toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* MILESTONE CELEBRATION */
-.milestone {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 72px;
-  font-weight: 900;
-  color: #ffd54f;
-  text-shadow: 
-    0 4px 0 rgba(0, 0, 0, 0.7),
-    0 8px 16px rgba(255, 213, 79, 0.6),
-    0 0 40px rgba(255, 159, 28, 0.8);
-  z-index: 998;
-  pointer-events: none;
-  animation: pop 1.2s cubic-bezier(0.34,1.56,0.64,1) forwards;
-  letter-spacing: 3px;
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.7));
-}
-
-/* SCROLLBAR STYLING */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 213, 79, 0.05);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 213, 79, 0.3);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 213, 79, 0.5);
-}
-
-/* RARITY COLORS */
-.upgrade.common {
-  border-color: rgba(255, 213, 79, 0.3);
-}
-
-.upgrade.common:hover {
-  border-color: rgba(255, 213, 79, 0.7);
-  background: linear-gradient(135deg, #7a9aba, #6a8aaa);
-}
-
-.upgrade.rare {
-  border-color: rgba(100, 181, 246, 0.4);
-}
-
-.upgrade.rare:hover {
-  border-color: rgba(100, 181, 246, 0.8);
-  background: linear-gradient(135deg, #5a7a9a, #4a6a8a);
-  box-shadow: 0 10px 24px rgba(100, 181, 246, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.2);
-}
-
-.upgrade.epic {
-  border-color: rgba(255, 107, 107, 0.4);
-}
-
-.upgrade.epic:hover {
-  border-color: rgba(255, 107, 107, 0.8);
-  background: linear-gradient(135deg, #8a6a6a, #7a5a5a);
-  box-shadow: 0 10px 24px rgba(255, 107, 107, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.2);
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Robo Clicker - Evolution</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+    <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
 </head>
 <body>
-<header>
-<h1>Robo Clicker</h1>
-<div class="top-right">
-<div class="icon-btn" onclick="openDaily()" title="Daily Reward">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <rect x="3" y="4" width="18" height="18" rx="2"/>
-    <path d="M16 2v4M8 2v4M3 10h18"/>
-  </svg>
-</div>
-<div class="icon-btn" onclick="openAchievements()" title="Achievements">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <path d="M6 9l6-7.5 6 7.5M5 9h14M7 10.5h10M6 19h12a2 2 0 002-2V9a2 2 0 00-2-2h-3l-2-2.5L10 7H7a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-  </svg>
-</div>
-<div class="icon-btn" onclick="openLeaderboard()" title="Leaderboard">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <rect x="3" y="12" width="4" height="8" rx="1"/>
-    <rect x="10" y="6" width="4" height="14" rx="1"/>
-    <rect x="17" y="9" width="4" height="11" rx="1"/>
-  </svg>
-</div>
-<div class="icon-btn" onclick="openSettings()" title="Settings">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <circle cx="12" cy="12" r="3"/>
-    <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m4.24-4.24l4.24-4.24"/>
-  </svg>
-</div>
-<div class="currency">
-  <span id="bots">0</span>
-</div>
-</div>
-</header>
+    <div class="animated-bg">
+        <div class="bg-shape shape-1"></div>
+        <div class="bg-shape shape-2"></div>
+        <div class="bg-shape shape-3"></div>
+        <div class="bg-grid"></div>
+    </div>
 
-<div class="game">
-<div class="factory" id="factory">
-<h2>Factory</h2>
-<div id="robot">
-  <div class="robot-core"></div>
-</div>
-</div>
+    <!-- SVG Definitions -->
+    <svg style="display: none;">
+        <symbol id="icon-settings" viewBox="0 0 24 24"><path fill="currentColor" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></symbol>
+        <symbol id="icon-gift" viewBox="0 0 24 24"><path fill="currentColor" d="M20,6h-2.18c0.11-0.31,0.18-0.65,0.18-1c0-1.66-1.34-3-3-3c-1.05,0-1.96,0.54-2.5,1.35l-0.5,0.67l-0.5-0.68 C10.96,2.54,10.05,2,9,2C7.34,2,6,3.34,6,5c0,0.35,0.07,0.69,0.18,1H4C2.9,6,2,6.9,2,8v3c0,1.11,0.89,2,2,2v9c0,1.1,0.9,2,2,2h12 c1.1,0,2-0.9,2-2v-9c1.11,0,2-0.89,2-2V8C22,6.9,21.1,6,20,6z M15,4c0.55,0,1,0.45,1,1s-0.45,1-1,1s-1-0.45-1-1S14.45,4,15,4z M9,4 c0.55,0,1,0.45,1,1s-0.45,1-1,1S8.45,4,9,4z M11,22H6v-9h5V22z M18,22h-5v-9h5V22z M20,11H4V8h16V11z"/></symbol>
+        <symbol id="icon-trophy" viewBox="0 0 24 24"><path fill="currentColor" d="M19,5h-2V3H7v2H5C3.9,5,3,5.9,3,7v1c0,2.55,1.92,4.63,4.39,4.94c0.63,1.5,1.98,2.63,3.61,2.96V19H7v2h10v-2 h-4v-3.1c1.63-0.33,2.98-1.46,3.61-2.96C19.08,12.63,21,10.55,21,8V7C21,5.9,20.1,5,19,5z M5,8V7h2v3.82C5.84,10.4,5,9.3,5,8z M19,8 c0,1.3-0.84,2.4-2,2.82V7h2V8z"/></symbol>
+        <symbol id="icon-money" viewBox="0 0 24 24"><path fill="currentColor" d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></symbol>
+        <symbol id="icon-bolt" viewBox="0 0 24 24"><path fill="currentColor" d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></symbol>
+        <symbol id="icon-robot" viewBox="0 0 24 24"><path fill="currentColor" d="M12,2c-1.1,0-2,0.9-2,2v2h4V4C14,2.9,13.1,2,12,2z M17,6H7C5.9,6,5,6.9,5,8v11c0,1.1,0.9,2,2,2h10c1.1,0,2-0.9,2-2V8 C19,6.9,18.1,6,17,6z M10,13c-0.55,0-1-0.45-1-1s0.45-1,1-1s1,0.45,1,1S10.55,13,10,13z M14,13c-0.55,0-1-0.45-1-1s0.45-1,1-1 s1,0.45,1,1S14.55,13,14,13z"/></symbol>
+        <symbol id="icon-fire" viewBox="0 0 24 24"><path fill="currentColor" d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></symbol>
+        <symbol id="icon-time" viewBox="0 0 24 24"><path fill="currentColor" d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></symbol>
+        <symbol id="icon-star" viewBox="0 0 24 24"><path fill="currentColor" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></symbol>
+        <symbol id="icon-arrow-right" viewBox="0 0 24 24"><path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></symbol>
+        <symbol id="icon-grid" viewBox="0 0 24 24"><path fill="currentColor" d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z"/></symbol>
+        <symbol id="icon-target" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></symbol>
+        <symbol id="icon-chip" viewBox="0 0 24 24"><path fill="currentColor" d="M6 4h12v16H6z" opacity=".3"/><path fill="currentColor" d="M20 10V6c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4h2v-4h-2zm-2 8H6V6h12v12zm-8-6h4v4h-4z"/></symbol>
+        <symbol id="icon-factory" viewBox="0 0 24 24"><path fill="currentColor" d="M22 22H2V10l7-3v2l5-2v3l3-3v4l5-3v14zM12 9.95l-5 2V10l-3 1.32V20h16v-8h-8V9.95z"/></symbol>
+        <symbol id="icon-cursor" viewBox="0 0 24 24"><path fill="currentColor" d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zM18 10.5c-1.25 0-2.43.37-3.41 1H11.5c-.28 0-.5.22-.5.5v7c0 .55.45 1 1 1h5.5c1.66 0 3-1.34 3-3v-3c0-1.93-1.57-3.5-3.5-3.5zM6 13c0 1.1.9 2 2 2h2v-2H8c-.55 0-1-.45-1-1s.45-1 1-1h5v-2H8c-1.66 0-3 1.34-3 3z"/></symbol>
+        <symbol id="icon-tag" viewBox="0 0 24 24"><path fill="currentColor" d="M20 12l-8.5-6L4 13.5V20h6.5l7.5-7.5c.8-.8.8-2.1 0-2.9l-1.5-1.5c-.8-.8-2.1-.8-2.9 0zM10 18H6v-4l7-7 4 4-7 7z"/></symbol>
+        <symbol id="icon-gear" viewBox="0 0 24 24"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></symbol>
+    </svg>
 
-<div>
-<div class="panel" style="padding: 16px; display: flex; gap: 16px; margin-bottom: 12px;">
-  <div style="flex: 1; padding: 12px; background: rgba(100,181,246,0.15); border-radius: 10px; border: 1px solid rgba(100,181,246,0.4); text-align: center;">
-    <div style="font-size: 12px; color: #aaa; margin-bottom: 6px;">📈 Milestones</div>
-    <div style="font-size: 24px; font-weight: 900; background: linear-gradient(135deg, #ffd54f, #ff9f1c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;" id="milestone">1</div>
-  </div>
-  <div style="flex: 1; padding: 12px; background: rgba(76,175,80,0.15); border-radius: 10px; border: 1px solid rgba(76,175,80,0.4); text-align: center;">
-    <div style="font-size: 12px; color: #aaa; margin-bottom: 6px;">🏆 Achievements</div>
-    <div style="font-size: 24px; font-weight: 900; background: linear-gradient(135deg, #64b5f6, #42a5f5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;" id="achievements">3/6</div>
-  </div>
-</div>
-
-<div class="panel" style="padding: 0; overflow: hidden; flex: 1; display: flex; flex-direction: column;">
-<h3 style="padding: 20px 20px 12px 20px; margin: 0;">Upgrades</h3>
-<div style="overflow-y: auto; padding: 0 12px 12px 12px; flex: 1;">
-<div class="upgrade" onclick="buyClick()">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-    <div>
-      <span class="upgrade-name">Stronger Click</span>
-      <div class="upgrade-description">+1 Bot per click</div>
-    </div>
-    <span class="upgrade-cost"><span id="clickCost">10</span></span>
-  </div>
-</div>
-<div class="upgrade" onclick="buyAuto()">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-    <div>
-      <span class="upgrade-name">Auto Builder</span>
-      <div class="upgrade-description">+1 Bots per second</div>
-    </div>
-    <span class="upgrade-cost"><span id="autoCost">50</span></span>
-  </div>
-</div>
-<div class="upgrade" onclick="buyMega()">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-    <div>
-      <span class="upgrade-name">Mega Click</span>
-      <div class="upgrade-description">+5 Bonus per click</div>
-    </div>
-    <span class="upgrade-cost"><span id="megaCost">250</span></span>
-  </div>
-</div>
-<div class="upgrade" onclick="buyBot()">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-    <div>
-      <span class="upgrade-name">Bot Assistant</span>
-      <div class="upgrade-description">+2 Bots/sec & boost</div>
-    </div>
-    <span class="upgrade-cost"><span id="botCost">100</span></span>
-  </div>
-</div>
-<div class="upgrade" onclick="buyMultiplier()">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-    <div>
-      <span class="upgrade-name">Click Multiplier</span>
-      <div class="upgrade-description">+0.5x multiplier</div>
-    </div>
-    <span class="upgrade-cost"><span id="multiplierCost">500</span></span>
-  </div>
-</div>
-<div class="upgrade" onclick="buySuper()">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-    <div>
-      <span class="upgrade-name">Super Bot</span>
-      <div class="upgrade-description">+8 mega & +3 auto</div>
-    </div>
-    <span class="upgrade-cost"><span id="superCost">1000</span></span>
-  </div>
-</div>
-<div class="upgrade" onclick="buyFactory()">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-    <div>
-      <span class="upgrade-name">Factory Upgrade</span>
-      <div class="upgrade-description">+1 auto, +0.5 click</div>
-    </div>
-    <span class="upgrade-cost"><span id="factoryCost">200</span></span>
-  </div>
-</div>
-<div class="upgrade" onclick="buyMomentum()">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-    <div>
-      <span class="upgrade-name">Momentum Boost</span>
-      <div class="upgrade-description">+10 mega, +0.8x</div>
-    </div>
-    <span class="upgrade-cost"><span id="momentumCost">750</span></span>
-  </div>
-</div>
-<div class="upgrade" onclick="buyLegendary()">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-    <div>
-      <span class="upgrade-name">Legendary Power</span>
-      <div class="upgrade-description">1.5x click, 1.3x auto</div>
-    </div>
-    <span class="upgrade-cost"><span id="legendaryCost">2500</span></span>
-  </div>
-</div>
-</div>
-</div>
-
-<div class="panel upgrade rebirth-btn" onclick="doRebirth()" style="margin-top: 12px;">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-    <div>
-      <span class="upgrade-name">Rebirth</span>
-      <div class="upgrade-description">Reset & earn bonuses</div>
-    </div>
-    <span class="upgrade-cost">1K+</span>
-  </div>
-  <span class="rebirth-subtitle">Restart with bonuses</span>
-</div>
-</div>
-</div>
-
-<!-- DAILY MODAL -->
-<div class="modal" id="dailyModal">
-  <div class="modal-box" style="max-width: 520px;">
-    <h3>Daily Reward</h3>
-    <div id="dailyText" style="font-size: 18px; margin: 30px 0; min-height: 100px; display: flex; flex-direction: column; justify-content: center;"></div>
-    <div style="margin: 20px 0; padding: 20px; background: rgba(0,212,255,0.1); border-radius: 12px; border-left: 4px solid var(--accent-primary);">
-      <div style="font-size: 14px; color: var(--text-secondary);">Next daily reward in:</div>
-      <div id="dailyTimer" style="font-size: 20px; font-weight: 900; color: var(--accent-primary); margin-top: 8px;">23:59:59</div>
-    </div>
-    <button onclick="claimDaily()">Claim Reward</button>
-  </div>
-</div>
-
-<!-- ACHIEVEMENTS MODAL -->
-<div class="modal" id="achModal">
-  <div class="modal-box" style="max-width: 580px;">
-    <h3>🏆 Achievements</h3>
-    <div style="margin: 20px 0; max-height: 400px; overflow-y: auto;">
-      <div class="achievement-item" style="padding: 16px; margin-bottom: 12px; background: rgba(76,175,80,0.1); border: 2px solid rgba(76,175,80,0.4); border-radius: 12px;">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div>
-            <div style="font-size: 16px; font-weight: 700;">First Click ✨</div>
-            <div style="font-size: 12px; color: #aaa; margin-top: 4px;">Click the robot for the first time</div>
-          </div>
-          <div style="font-size: 24px;">✅</div>
+    <div class="game-wrapper">
+        <!-- Active Boosts Container (Bottom Left) -->
+        <div id="active-boosts-container" class="boosts-container">
+            <!-- Injected JS -->
         </div>
-      </div>
-      <div class="achievement-item" style="padding: 16px; margin-bottom: 12px; background: rgba(76,175,80,0.1); border: 2px solid rgba(76,175,80,0.4); border-radius: 12px;">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div>
-            <div style="font-size: 16px; font-weight: 700;">100 Bots 🤖</div>
-            <div style="font-size: 12px; color: #aaa; margin-top: 4px;">Accumulate 100 Bots</div>
-          </div>
-          <div style="font-size: 24px;">✅</div>
+
+        <!-- Top HUD -->
+        <header class="top-hud">
+            <div class="stats-group">
+                <div class="currency-container" id="money-display-container">
+                    <div class="currency-icon-wrapper">
+                        <svg class="icon"><use href="#icon-money"></use></svg>
+                    </div>
+                    <span id="money-count" class="currency-value">0</span>
+                </div>
+                
+                <div class="stat-pill">
+                    <svg class="icon-sm"><use href="#icon-bolt"></use></svg>
+                    <span id="bot-value-stat">1</span> Value
+                </div>
+                
+                <div class="stat-pill">
+                    <svg class="icon-sm"><use href="#icon-robot"></use></svg>
+                    <span id="total-bots-stat">0</span> Bots
+                </div>
+            </div>
+
+            <div class="hud-controls">
+                <button id="index-btn" class="icon-btn" title="Robot Index">
+                    <svg class="icon"><use href="#icon-grid"></use></svg>
+                    <div id="index-badge" class="notification-badge hidden">!</div>
+                </button>
+                <button id="leaderboard-btn" class="icon-btn" title="Leaderboard"><svg class="icon"><use href="#icon-trophy"></use></svg></button>
+                <button id="daily-reward-btn" class="icon-btn" title="Daily Rewards">
+                    <svg class="icon"><use href="#icon-gift"></use></svg>
+                    <div id="daily-badge" class="notification-badge hidden">1</div>
+                </button>
+                <button id="settings-btn" class="icon-btn" title="Settings"><svg class="icon"><use href="#icon-settings"></use></svg></button>
+            </div>
+        </header>
+
+        <!-- Leaderboard Dropdown (Fixed Modal) -->
+        <div id="leaderboard-overlay" class="leaderboard-dropdown">
+            <div class="leaderboard-header">
+                <h3>GLOBAL RANKINGS</h3>
+                <div class="leaderboard-close close-modal-btn" data-target="leaderboard-overlay">&times;</div>
+            </div>
+            <div class="leaderboard-content">
+                <div class="leaderboard-metric-label">RANKED BY: TOTAL BOTS DEPLOYED</div>
+                <div id="leaderboard-scores" class="scores-list">
+                    <!-- Real scores here -->
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="achievement-item" style="padding: 16px; margin-bottom: 12px; background: rgba(76,175,80,0.1); border: 2px solid rgba(76,175,80,0.4); border-radius: 12px;">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div>
-            <div style="font-size: 16px; font-weight: 700;">Big Spender 💰</div>
-            <div style="font-size: 12px; color: #aaa; margin-top: 4px;">Buy 10 upgrades</div>
-          </div>
-          <div style="font-size: 24px;">✅</div>
+
+        <!-- Side Drawer (Ads) -->
+        <div id="bonus-drawer" class="bonus-drawer closed">
+            <div class="drawer-handle" id="drawer-toggle">
+                <svg class="icon-lg"><use href="#icon-gift"></use></svg>
+                <div id="bonus-badge" class="notification-badge hidden" style="right: -5px; top: -5px;">!</div>
+            </div>
+            <div class="drawer-content">
+                <div class="confetti-container">
+                    <div class="confetti"></div><div class="confetti" style="left: 20%; animation-delay: 0.2s; background: blue;"></div><div class="confetti" style="left: 40%; animation-delay: 0.5s; background: green;"></div><div class="confetti" style="left: 60%; animation-delay: 0.1s; background: yellow;"></div><div class="confetti" style="left: 80%; animation-delay: 0.3s; background: purple;"></div>
+                </div>
+                <h3 class="drawer-title" style="text-align: center; font-size: 1.5rem; font-weight: 900; margin-bottom: 20px; text-transform: uppercase;">AD REWARDS!</h3>
+                
+                <div class="bonus-card" id="bonus-turbo">
+                    <div class="best-value-badge">BEST!</div>
+                    <div class="bonus-icon turbo-icon"><svg class="icon"><use href="#icon-fire"></use></svg></div>
+                    <div class="bonus-info">
+                        <div class="bonus-title">TURBO SURGE</div>
+                        <div class="bonus-desc">3x Income (1m)</div>
+                    </div>
+                    <div class="bonus-action">
+                        <button class="bonus-btn" onclick="game.watchAd('turbo')">WATCH AD 📺</button>
+                    </div>
+                </div>
+
+                <div class="bonus-card" id="bonus-auto">
+                    <div class="bonus-icon auto-icon"><svg class="icon"><use href="#icon-time"></use></svg></div>
+                    <div class="bonus-info">
+                        <div class="bonus-title">OVERCLOCK</div>
+                        <div class="bonus-desc">10x Auto Speed (30s)</div>
+                    </div>
+                    <div class="bonus-action">
+                        <button class="bonus-btn" onclick="game.watchAd('auto')">WATCH AD 📺</button>
+                    </div>
+                </div>
+
+                 <div class="bonus-card" id="bonus-lucky">
+                    <div class="bonus-icon lucky-icon"><svg class="icon"><use href="#icon-star"></use></svg></div>
+                    <div class="bonus-info">
+                        <div class="bonus-title">LUCKY STRIKE</div>
+                        <div class="bonus-desc">Instant Cash</div>
+                    </div>
+                    <div class="bonus-action">
+                        <button class="bonus-btn" onclick="game.watchAd('lucky')">WATCH AD 📺</button>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="achievement-item" style="padding: 16px; margin-bottom: 12px; background: rgba(100,100,100,0.1); border: 2px solid rgba(100,100,100,0.4); border-radius: 12px;">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div>
-            <div style="font-size: 16px; font-weight: 700;">Mega Clicker 💥</div>
-            <div style="font-size: 12px; color: #aaa; margin-top: 4px;">Use Mega Click 100 times</div>
-          </div>
-          <div style="font-size: 24px;">❓</div>
+
+        <!-- Main Game Area -->
+        <main class="main-stage">
+            <!-- Center: The HERO -->
+            <section class="hero-section">
+                <!-- EVOLUTION GAUGE -->
+                <div class="fusion-container">
+                    <div class="fusion-label">EVOLUTION: 0%</div>
+                    <div class="fusion-track">
+                        <div id="fusion-fill" class="fusion-fill" style="width: 0%"></div>
+                    </div>
+                    <div id="next-evo-preview" class="next-evo-text">NEXT: ???</div>
+                </div>
+
+                <div class="click-pad">
+                    <div id="hero-robot" class="hero-robot">
+                        <div class="robot-glow"></div>
+                        <!-- Antenna Removed -->
+                        <div class="robot-head">
+                            <div class="robot-visor"></div>
+                            <div class="robot-eyes">
+                                <div class="eye left"></div>
+                                <div class="eye right"></div>
+                            </div>
+                        </div>
+                        <div class="robot-neck"></div>
+                        <div class="robot-body">
+                            <div class="chest-plate">
+                                <div class="core-light"></div>
+                            </div>
+                        </div>
+                        <div class="robot-shoulders"></div>
+                        <div class="robot-arms">
+                            <div class="arm left">
+                                <div class="hand"></div>
+                            </div>
+                            <div class="arm right">
+                                <div class="hand"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="click-platform"></div>
+                </div>
+            </section>
+
+            <!-- Right Side: Upgrades -->
+            <aside class="side-panel right-panel glass-panel">
+                <div class="panel-header upgrades-header">
+                    <h2>Upgrades</h2>
+                </div>
+                <div id="upgrades-container" class="scrollable-content">
+                    <!-- Upgrades injected via JS -->
+                </div>
+                <button id="open-rebirth-btn" class="rebirth-trigger-btn">
+                    REBIRTH
+                </button>
+            </aside>
+        </main>
+
+            <!-- Modals -->
+            <div id="modal-overlay" class="modal-overlay hidden">
+            
+            <!-- Evolution Complete Modal (Landscape Style) -->
+            <div id="evolution-modal" class="game-modal evolution-theme hidden">
+                <div class="evo-ray-bg"></div>
+                <div class="evo-particles"></div>
+                <div class="modal-body evo-body-landscape">
+                    <div class="evo-visual-section">
+                        <div class="evo-new-robot">
+                            <!-- Injected JS -->
+                        </div>
+                    </div>
+                    <div class="evo-info-section">
+                        <h2 class="evo-title-landscape">YOU EVOLVED!</h2>
+                        <div class="evo-name-box-landscape">
+                            <div class="evo-tier-label">NEW FORM ACQUIRED</div>
+                            <div id="evo-new-name" class="evo-new-name">CYBER-SAMURAI</div>
+                        </div>
+                        <div class="evo-stat-landscape">
+                            <span class="stat-label">MULTIPLIER:</span>
+                            <span id="evo-mult-val" class="stat-val">x500</span>
+                        </div>
+                        <button id="evo-claim-btn" class="evo-claim-btn-landscape">CLAIM</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rebirth Modal -->
+            <div id="rebirth-modal" class="game-modal rebirth-theme hidden">
+                <div class="modal-header">
+                    <h2>SYSTEM REBOOT</h2>
+                    <button class="close-modal-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="rebirth-icon">🔄</div>
+                    <p>Reset progress for a permanent <strong>2x Multiplier</strong></p>
+                    <div class="rebirth-stats">
+                        <div class="stat-box">
+                            <label>Current</label>
+                            <span class="current-mult">1x</span>
+                        </div>
+                        <div class="arrow">➔</div>
+                        <div class="stat-box">
+                            <label>New</label>
+                            <span class="new-mult">2x</span>
+                        </div>
+                    </div>
+                    <button id="confirm-rebirth-btn" class="rebirth-btn-action">REBIRTH ($1M)</button>
+                </div>
+            </div>
+
+             <!-- Daily Rewards Modal (7-Day Streak) -->
+             <div id="daily-rewards-modal" class="game-modal wide-modal hidden">
+                <div class="modal-header">
+                    <h2>Daily Supply Drop</h2>
+                    <button class="close-modal-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="daily-streak-grid" id="daily-streak-grid">
+                        <!-- Generated by JS -->
+                    </div>
+                    <div class="daily-status">
+                        <button id="claim-daily-btn" class="action-btn">CLAIM REWARD</button>
+                        <div id="daily-timer" class="cooldown-text hidden">Next in: 23h 59m</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Modal -->
+            <div id="settings-modal" class="game-modal hidden">
+                 <div class="modal-header">
+                    <h2>Settings</h2>
+                    <button class="close-modal-btn">&times;</button>
+                </div>
+                <div class="settings-list">
+                    <div class="setting-row">
+                        <div class="setting-label">Sound Effects</div>
+                        <input type="range" id="setting-sfx" min="0" max="100" value="100" class="range-slider">
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-label">Music</div>
+                        <input type="range" id="setting-music" min="0" max="100" value="100" class="range-slider">
+                    </div>
+                    <div class="setting-row bottom-row">
+                        <button id="hard-reset-btn" class="danger-btn">RESET PROGRESS</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Offline Earnings Modal -->
+            <div id="offline-modal" class="game-modal wide-modal hidden">
+                <div class="modal-header">
+                    <h2>WELCOME BACK!</h2>
+                </div>
+                <div class="modal-body">
+                    <div style="font-size: 1.2rem; margin-bottom: 10px;">You were away for:</div>
+                    <div id="offline-time" style="font-size: 1.5rem; font-weight: 900; color: var(--primary); margin-bottom: 20px;">0h 0m</div>
+                    
+                    <div style="font-size: 1.2rem; margin-bottom: 10px;">Your bots collected:</div>
+                    <div class="currency-container" style="justify-content: center; margin-bottom: 30px;">
+                        <span id="offline-earnings" class="currency-value" style="font-size: 3rem;">0</span>
+                    </div>
+
+                    <div class="confirm-actions" style="flex-direction: column; gap: 15px;">
+                        <button id="claim-offline-2x-btn" class="action-btn" style="background: var(--purple); width: 100%;">
+                            DOUBLE IT! (WATCH AD 📺)
+                        </button>
+                        <button id="claim-offline-btn" class="action-btn" style="background: #b2bec3; width: 100%;">
+                            CLAIM STANDARD
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirmation Modal -->
+            <div id="confirm-modal" class="game-modal hidden">
+                <div class="modal-header" style="background: var(--danger); color: white;">
+                    <h2>DANGER ZONE</h2>
+                    <button class="close-modal-btn" style="background: white; color: var(--danger); border-color: white;">&times;</button>
+                </div>
+                <div class="modal-body confirm-modal-body">
+                    <div class="confirm-text">Are you sure you want to delete all progress? This cannot be undone!</div>
+                    <div class="confirm-actions">
+                        <button id="confirm-yes-btn" class="confirm-btn btn-yes">YES, DELETE</button>
+                        <button id="confirm-no-btn" class="confirm-btn btn-no">CANCEL</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Robot Index Modal -->
+            <div id="index-modal" class="game-modal wide-modal hidden">
+                <div class="modal-header">
+                    <h2>Robot Index</h2>
+                    <button class="close-modal-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="index-grid" id="robot-index-grid">
+                        <!-- Generated JS -->
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="achievement-item" style="padding: 16px; margin-bottom: 12px; background: rgba(100,100,100,0.1); border: 2px solid rgba(100,100,100,0.4); border-radius: 12px;">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div>
-            <div style="font-size: 16px; font-weight: 700;">Reborn 🔄</div>
-            <div style="font-size: 12px; color: #aaa; margin-top: 4px;">Complete your first Rebirth</div>
-          </div>
-          <div style="font-size: 24px;">❓</div>
-        </div>
-      </div>
-      <div class="achievement-item" style="padding: 16px; margin-bottom: 12px; background: rgba(100,100,100,0.1); border: 2px solid rgba(100,100,100,0.4); border-radius: 12px;">
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div>
-            <div style="font-size: 16px; font-weight: 700;">Legendary Master 👑</div>
-            <div style="font-size: 12px; color: #aaa; margin-top: 4px;">Unlock Legendary Power</div>
-          </div>
-          <div style="font-size: 24px;">❓</div>
-        </div>
-      </div>
+
     </div>
-    <button onclick="closeModals()" style="width: 100%;">Close</button>
-  </div>
-</div>
-
-<!-- SETTINGS MODAL -->
-<div class="modal" id="setModal">
-  <div class="modal-box" style="max-width: 540px;">
-    <h3>Settings</h3>
-    <div style="margin: 40px 0; text-align: left;">
-      <div style="margin-bottom: 40px;">
-        <div style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--accent-primary);">Sound & Music</div>
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 12px; background: rgba(0,212,255,0.1); border-radius: 10px;">
-          <label style="font-size: 16px; margin: 0; cursor: pointer; color: var(--text-primary);">Sound Effects</label>
-          <input type="checkbox" id="soundToggle" checked>
-        </div>
-        <div style="margin: 20px 0;">
-          <label style="font-size: 14px; color: var(--text-secondary); display: block; margin-bottom: 8px;">Sound Volume: <span id="soundVolumeDisplay">100</span>%</label>
-          <input type="range" id="soundVolume" min="0" max="100" value="100">
-        </div>
-      </div>
-      <div style="margin-bottom: 30px;">
-        <div style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--accent-secondary);">Music</div>
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 12px; background: rgba(99,102,241,0.1); border-radius: 10px;">
-          <label style="font-size: 16px; margin: 0; cursor: pointer; color: var(--text-primary);">Background Music</label>
-          <input type="checkbox" id="musicToggle" checked>
-        </div>
-        <div style="margin: 20px 0;">
-          <label style="font-size: 14px; color: var(--text-secondary); display: block; margin-bottom: 8px;">Music Volume: <span id="musicVolumeDisplay">100</span>%</label>
-          <input type="range" id="musicVolume" min="0" max="100" value="100">
-        </div>
-      </div>
-    </div>
-    <button onclick="closeModals()" style="width: 100%;">Close Settings</button>
-  </div>
-</div>
-
-<!-- OFFLINE MODAL -->
-<div class="modal" id="offlineModal">
-  <div class="modal-box" style="max-width: 520px;">
-    <h3>Welcome Back!</h3>
-    <div id="offlineText" style="font-size: 18px; margin: 30px 0; min-height: 80px; display: flex; align-items: center; justify-content: center;"></div>
-    <button onclick="closeModals()">Continue</button>
-  </div>
-</div>
-
-<script>
-const cg=window.CrazyGamesSDK; if(cg) cg.init();
-let bots=0,perClick=1,autoBots=0,megaClick=0,clickCost=10,autoCost=50,megaCost=250,rebirths=0;
-let botLevel=0,botCost=100,multiplier=1,multiplierCost=500,superLevel=0,superCost=1000;
-let factoryLevel=0,factoryCost=200,momentumLevel=0,momentumCost=750,legendaryLevel=0,legendaryCost=2500;
-let milestone=1,dailyStreak=0,lastDailyClaimTime=0;
-let sound=true,music=true,soundVolume=1,musicVolume=1;
-
-const clickSound=new Audio('https://assets.mixkit.co/sfx/preview/mixkit-soft-click-1124.mp3');clickSound.volume=.4;
-const el=i=>document.getElementById(i);
-
-function updateUI(){
- el('bots').textContent=Math.floor(bots).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
- el('clickCost').textContent=clickCost;
- el('autoCost').textContent=autoCost;
- el('megaCost').textContent=megaCost;
- el('botCost').textContent=botCost;
- el('multiplierCost').textContent=multiplierCost;
- el('superCost').textContent=superCost;
- el('factoryCost').textContent=factoryCost;
- el('momentumCost').textContent=momentumCost;
- el('legendaryCost').textContent=legendaryCost;
- el('milestone').textContent=milestone;
- save();
-}
-
-robot.onclick=e=>{
- bots+=perClick+megaClick;
- burst(e.clientX,e.clientY);
- createClickRing(e.clientX,e.clientY);
- createSparks(e.clientX,e.clientY);
- addButtonPulse(robot);
- robot.style.animation='robotClick 0.4s ease-out';
- setTimeout(()=>robot.style.animation='float 4s ease-in-out infinite, robotPulse 2s ease-in-out infinite',400);
- if(sound){clickSound.currentTime=0;clickSound.play()}
- updateUI();
-}
-
-function buyClick(){if(bots>=clickCost){bots-=clickCost;perClick++;clickCost=Math.ceil(clickCost*1.6);createConfetti();showUpgradeToast('Stronger Click ⬆️');updateUI()}}
-function buyAuto(){if(bots>=autoCost){bots-=autoCost;autoBots++;autoCost=Math.ceil(autoCost*2);createConfetti();showUpgradeToast('Auto Builder 🤖');updateUI()}}
-function buyMega(){if(bots>=megaCost){bots-=megaCost;megaClick+=5;megaCost=Math.ceil(megaCost*2.5);createConfetti();showUpgradeToast('Mega Click 💥');updateUI()}}
-function buyBot(){if(bots>=botCost){bots-=botCost;botLevel++;autoBots+=2;botCost=Math.ceil(botCost*2.2);createConfetti();showUpgradeToast('Bot Assistant 🦾');updateUI()}}
-function buyMultiplier(){if(bots>=multiplierCost){bots-=multiplierCost;multiplier+=0.5;perClick*=1.2;multiplierCost=Math.ceil(multiplierCost*2.8);createConfetti();showUpgradeToast('Click Multiplier 2️⃣');updateUI()}}
-function buySuper(){if(bots>=superCost){bots-=superCost;superLevel++;megaClick+=8;autoBots+=3;superCost=Math.ceil(superCost*3);createConfetti();showUpgradeToast('Super Bot ⭐');updateUI()}}
-function buyFactory(){if(bots>=factoryCost){bots-=factoryCost;factoryLevel++;autoBots+=1;perClick+=0.5;factoryCost=Math.ceil(factoryCost*2.4);createConfetti();showUpgradeToast('Factory Upgrade 🏭');updateUI()}}
-function buyMomentum(){if(bots>=momentumCost){bots-=momentumCost;momentumLevel++;megaClick+=10;multiplier+=0.8;momentumCost=Math.ceil(momentumCost*2.6);createConfetti();showUpgradeToast('Momentum Boost 💫');updateUI()}}
-function buyLegendary(){if(bots>=legendaryCost){bots-=legendaryCost;legendaryLevel++;perClick*=1.5;autoBots*=1.3;megaClick*=1.4;legendaryCost=Math.ceil(legendaryCost*3.5);createExplosion();showUpgradeToast('Legendary Power 👑');updateUI()}}
-
-function showUpgradeToast(text){
-  const toast=document.createElement('div');
-  toast.className='toast';
-  toast.innerHTML=`<span style="font-size:16px;">${text}</span>`;
-  document.body.appendChild(toast);
-  setTimeout(()=>toast.classList.add('show'),10);
-  setTimeout(()=>{toast.classList.remove('show');setTimeout(()=>toast.remove(),300)},2000);
-}
-
-function createConfetti(){
-  for(let i=0;i<28;i++){
-    const confetti=document.createElement('div');
-    const color=['#ffd54f','#ff9f1c','#ff6b6b','#64b5f6'][Math.floor(Math.random()*4)];
-    confetti.style.cssText=`position:fixed;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;background:${color};left:${Math.random()*window.innerWidth}px;top:0;border-radius:50%;pointer-events:none;z-index:997;box-shadow:0 0 ${4+Math.random()*6}px ${color};`;
-    const duration=900+Math.random()*700;
-    const angle=Math.random()*Math.PI*2;
-    const dist=window.innerHeight+100;
-    const dx=Math.cos(angle)*300;
-    confetti.animate([{transform:'translateY(0) rotate(0deg) scale(1)',opacity:1},{transform:`translateY(${dist}px) rotate(${Math.random()*720}deg) scale(0)`,opacity:0}],{duration,easing:'cubic-bezier(0.25,0.46,0.45,0.94)'});
-    document.body.appendChild(confetti);
-    setTimeout(()=>confetti.remove(),duration);
-  }
-}
-
-setInterval(()=>{bots+=autoBots;checkMilestones();updateUI()},1000);
-
-function doRebirth(){if(bots>=1000){rebirths++;bots=0;perClick=1;autoBots=0;megaClick=0;createExplosion();showMilestonePopup('⚡ REBIRTH! ⚡');updateUI()}}
-
-function createExplosion(){
-  for(let i=0;i<52;i++){
-    const particle=document.createElement('div');
-    const angle=Math.random()*Math.PI*2;
-    const velocity=10+Math.random()*16;
-    const dist=velocity*100;
-    const tx=Math.cos(angle)*dist;
-    const ty=Math.sin(angle)*dist;
-    const color=['#ffd54f','#ff9f1c','#64b5f6','#4caf50','#ff6b6b'][Math.floor(Math.random()*5)];
-    particle.style.cssText=`position:fixed;width:${8+Math.random()*8}px;height:${8+Math.random()*8}px;background:${color};left:50%;top:50%;border-radius:50%;pointer-events:none;z-index:997;box-shadow:0 0 ${8+Math.random()*12}px ${color};margin-left:-${4+Math.random()*4}px;margin-top:-${4+Math.random()*4}px;`;
-    particle.animate([{transform:'translate(0,0) scale(1)',opacity:1,filter:'blur(0px)'},{transform:`translate(${tx}px,${ty}px) scale(0)`,opacity:0,filter:'blur(8px)'}],{duration:1100,easing:'cubic-bezier(0.2,0.8,0.2,1)'});
-    document.body.appendChild(particle);
-    setTimeout(()=>particle.remove(),1100);
-  }
-}
-
-function burst(x,y){
-  const counterEl=el('bots');
-  const rect=counterEl.getBoundingClientRect();
-  const targetX=rect.left+rect.width/2;
-  const targetY=rect.top+rect.height/2;
-  
-  for(let i=0;i<28;i++){
-    const c=document.createElement('div');
-    c.className='coin';
-    c.style.left=x+'px';
-    c.style.top=y+'px';
-    const angle=Math.random()*Math.PI*2;
-    const initialVelocity=3+Math.random()*5;
-    const initialDx=Math.cos(angle)*initialVelocity;
-    const initialDy=Math.sin(angle)*initialVelocity;
-    
-    c.style.boxShadow=`0 0 12px rgba(255,213,79,1),inset -2px -2px 4px rgba(0,0,0,0.5)`;
-    
-    const frames=[
-      {transform:'translate(0,0) scale(1)',opacity:1},
-      {transform:`translate(${initialDx*60}px,${initialDy*60}px) scale(0.9)`,opacity:1,offset:0.4},
-      {transform:`translate(${targetX-x}px,${targetY-y}px) scale(0)`,opacity:0}
-    ];
-    
-    c.animate(frames,{duration:1200,easing:'cubic-bezier(0.3,0,0.7,1)'});
-    document.body.appendChild(c);
-    setTimeout(()=>c.remove(),1200);
-  }
-}
-
-function checkMilestones(){if(bots>1000&&milestone===1){milestone=2;el('robot').classList.add('big');showMilestonePopup('MILESTONE REACHED!')}}
-
-// DAILY
-function openDaily(){
-  el('dailyModal').style.display='flex';
-  const baseReward=500+dailyStreak*100;
-  el('dailyText').innerHTML=`<div style="font-size:20px;margin:10px 0;font-weight:700;">Day ${dailyStreak+1}</div><div style="font-size:28px;margin:15px 0;font-weight:900;">💰 <span style="background:linear-gradient(135deg,#4caf50,#81c784);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${baseReward} Bots</span></div><div style="font-size:13px;color:#ccc;margin-top:15px;">Streak: <strong style="color:#ffd54f;">${dailyStreak}</strong> days</div>`;
-}
-function claimDaily(){
-  const now=Date.now();
-  if(lastDailyClaimTime && now-lastDailyClaimTime<86400000){showUpgradeToast('❌ Already claimed today!');return}
-  const baseReward=500+dailyStreak*100;
-  bots+=baseReward;
-  dailyStreak++;
-  lastDailyClaimTime=now;
-  showDailyToast(baseReward);
-  closeModals();
-  updateUI();
-}
-
-function showDailyToast(amount){
-  const toast=document.createElement('div');
-  toast.className='toast';
-  toast.innerHTML=`✨ Streak +1 | <span style="background:linear-gradient(135deg,#4caf50,#81c784);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:900;">+${amount} Bots</span>`;
-  document.body.appendChild(toast);
-  setTimeout(()=>toast.classList.add('show'),10);
-  setTimeout(()=>{toast.classList.remove('show');setTimeout(()=>toast.remove(),300)},2700);
-}
-
-// MODALS
-function openAchievements(){el('achModal').style.display='flex';}
-function openSettings(){el('setModal').style.display='flex';el('soundToggle').checked=sound;el('musicToggle').checked=music;el('soundVolume').value=Math.round(soundVolume*100);el('musicVolume').value=Math.round(musicVolume*100);document.getElementById('soundVolumeDisplay').textContent=Math.round(soundVolume*100);document.getElementById('musicVolumeDisplay').textContent=Math.round(musicVolume*100);}
-function openLeaderboard(){if(cg)cg.showLeaderboard({leaderboardID:'main'});else alert('📊 Leaderboards coming soon!')}
-function closeModals(){document.querySelectorAll('.modal').forEach(m=>m.style.display='none')}
-
-// SAVE + OFFLINE
-function save(){localStorage.setItem('save',JSON.stringify({bots,perClick,autoBots,megaClick,clickCost,autoCost,megaCost,botLevel,botCost,multiplier,multiplierCost,superLevel,superCost,factoryLevel,factoryCost,momentumLevel,momentumCost,legendaryLevel,legendaryCost,milestone,time:Date.now(),sound,music,soundVolume,musicVolume,dailyStreak,lastDailyClaimTime}))}
-function load(){const d=JSON.parse(localStorage.getItem('save'));if(!d)return;bots=d.bots;perClick=d.perClick;autoBots=d.autoBots;megaClick=d.megaClick;clickCost=d.clickCost;autoCost=d.autoCost;megaCost=d.megaCost;botLevel=d.botLevel;botCost=d.botCost;multiplier=d.multiplier;multiplierCost=d.multiplierCost;superLevel=d.superLevel;superCost=d.superCost;factoryLevel=d.factoryLevel;factoryCost=d.factoryCost;momentumLevel=d.momentumLevel;momentumCost=d.momentumCost;legendaryLevel=d.legendaryLevel;legendaryCost=d.legendaryCost;milestone=d.milestone;sound=d.sound;music=d.music;soundVolume=d.soundVolume;musicVolume=d.musicVolume;dailyStreak=d.dailyStreak;lastDailyClaimTime=d.lastDailyClaimTime;const diff=Math.floor((Date.now()-d.time)/1000);const earned=diff*autoBots;if(earned>0){bots+=earned;el('offlineText').textContent=`You earned <span style="background:linear-gradient(135deg,#4caf50,#81c784);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:900;">${earned} Bots</span> while away!`;el('offlineModal').style.display='flex'}}
-load();updateUI();
-
-// REWARDED AD
-function watchAd(){if(cg)cg.showRewardedAd({onReward:()=>{bots+=1000;updateUI()}})}
-
-// ANIMATION ENHANCEMENTS
-function showMilestonePopup(text){
-  const popup=document.createElement('div');
-  popup.className='milestone';
-  popup.textContent=text;
-  popup.style.animation='pop 1s cubic-bezier(0.34,1.56,0.64,1)';
-  popup.style.fontSize='64px';
-  popup.style.textShadow='0 4px 0 rgba(0,0,0,0.7),0 8px 16px rgba(255,213,79,0.6),0 0 40px rgba(255,159,28,0.8)';
-  document.body.appendChild(popup);
-  setTimeout(()=>{popup.style.animation='fadeOut 0.6s ease-in';setTimeout(()=>popup.remove(),600)},1600);
-}
-
-function addButtonPulse(el){
-  el.style.animation='pulse 0.5s cubic-bezier(0.4,0,0.2,1)';
-  setTimeout(()=>{el.style.animation=''},500);
-}
-
-function createClickRing(x,y){
-  const ring=document.createElement('div');
-  ring.style.cssText=`position:fixed;width:50px;height:50px;border:4px solid #ffd54f;border-radius:50%;left:${x-25}px;top:${y-25}px;pointer-events:none;z-index:998;box-shadow:0 0 16px rgba(255,213,79,0.8),inset 0 0 12px rgba(255,213,79,0.4);`;
-  ring.animate([{transform:'scale(1)',opacity:1},{transform:'scale(3)',opacity:0}],{duration:700,easing:'cubic-bezier(0.2,0.8,0.2,1)'});
-  document.body.appendChild(ring);
-  setTimeout(()=>ring.remove(),700);
-}
-
-function createSparks(x,y){
-  const sparkCount=20+Math.floor(Math.random()*8);
-  for(let i=0;i<sparkCount;i++){
-    const spark=document.createElement('div');
-    spark.className='particle spark';
-    const angle=Math.random()*Math.PI*2;
-    const dist=60+Math.random()*100;
-    const tx=Math.cos(angle)*dist;
-    const ty=Math.sin(angle)*dist;
-    spark.style.cssText=`left:${x}px;top:${y}px;--tx:${tx}px;--ty:${ty}px;width:8px;height:8px;background:#ffd54f;border-radius:50%;box-shadow:0 0 8px #ff9f1c;`;
-    spark.animate([{opacity:1,transform:'scale(1) translate(0,0)'},{opacity:0,transform:`scale(0) translate(${tx}px,${ty}px)`}],{duration:750,easing:'cubic-bezier(0.2,0.8,0.2,1)'});
-    document.body.appendChild(spark);
-    setTimeout(()=>spark.remove(),750);
-  }
-}
-
-// VOLUME CONTROLS
-document.addEventListener('DOMContentLoaded',()=>{
-  const soundToggle=document.getElementById('soundToggle');
-  const musicToggle=document.getElementById('musicToggle');
-  const soundVolSlider=document.getElementById('soundVolume');
-  const musicVolSlider=document.getElementById('musicVolume');
-  
-  soundToggle.addEventListener('change',()=>{sound=soundToggle.checked;save()});
-  musicToggle.addEventListener('change',()=>{music=musicToggle.checked;save()});
-  soundVolSlider.addEventListener('input',()=>{soundVolume=soundVolSlider.value/100;clickSound.volume=soundVolume*0.4;document.getElementById('soundVolumeDisplay').textContent=soundVolSlider.value;save()});
-  musicVolSlider.addEventListener('input',()=>{musicVolume=musicVolSlider.value/100;document.getElementById('musicVolumeDisplay').textContent=musicVolSlider.value;save()});
-});
-</script>
+    <script src="script.js"></script>
 </body>
 </html>
-
