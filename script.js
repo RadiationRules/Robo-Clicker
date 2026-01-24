@@ -346,7 +346,7 @@ class RoboClicker {
         
         // EVOLUTION MECHANIC
         // Add XP per click
-        this.gameState.evolution.xp += 1;
+        this.gameState.evolution.xp += 0.5;
         if (this.gameState.evolution.xp >= this.gameState.evolution.maxXp) {
             this.evolveRobot();
         }
