@@ -73,11 +73,18 @@ class RoboClicker {
             boostEndTime: 0
         };
 
+        this.adManager = {
+            activeBoost: null, // Legacy flag, kept for safety
+            boosts: {}, // { type: endTime }
+            boostEndTime: 0
+        };
+
         this.audioCtx = null;
         this.musicNodes = []; // Store oscillators for music
         this.musicGain = null;
         this.els = {};
         
+        this.toggleDrawer = this.toggleDrawer.bind(this);
         this.toggleDrawer = this.toggleDrawer.bind(this);
     }
 
@@ -86,14 +93,8 @@ class RoboClicker {
         
         this.cacheDOM();
         this.initAudio();
-        await this.initSDK();
         this.loadGame();
         
-        // Notify SDK gameplay start after load
-        if (window.CrazyGames && window.CrazyGames.SDK) {
-             window.CrazyGames.SDK.game.gameplayStart();
-        }
-
         this.setupEventListeners();
         
         this.startGameLoop();
@@ -321,17 +322,6 @@ class RoboClicker {
         }
     }
 
-    async initSDK() {
-        if (window.CrazyGames && window.CrazyGames.SDK) {
-            try {
-                await window.CrazyGames.SDK.init();
-                // console.log("CrazyGames SDK Initialized"); // handled in logic
-            } catch (e) {
-                console.warn("SDK Init Failed", e);
-            }
-        }
-    }
-
     // --- GAMEPLAY LOGIC ---
 
     clickHero(event) {
@@ -555,11 +545,6 @@ class RoboClicker {
         this.gameState.evolution.maxXp = 100;
         this.applyRobotVisuals();
 
-        // Happy Time (Celebration)
-        if (window.CrazyGames && window.CrazyGames.SDK) {
-            window.CrazyGames.SDK.game.happytime();
-        }
-
         this.saveGame();
         this.updateDisplay();
         this.renderUpgrades();
@@ -584,16 +569,12 @@ class RoboClicker {
         const bonusBadge = document.getElementById('bonus-badge');
         if (bonusBadge) {
              const now = Date.now();
-             const lastAdTime = this.adManager.lastMidgameAd || 0;
              
-             // 1. Intro Nudge: Show after 30s if never opened
+             // Intro Nudge: Show after 30s if never opened
              const sessionTime = now - this.gameState.startTime;
              const showIntro = (sessionTime > 30000 && !this.gameState.hasOpenedDrawer);
 
-             // 2. Midgame Ad Ready (every 3 mins after stage 2)
-             const showMidgame = (now - lastAdTime > 180000 && this.gameState.evolution.stage >= 2);
-             
-             if (showIntro || showMidgame) {
+             if (showIntro) {
                  bonusBadge.classList.remove('hidden');
              } else {
                  bonusBadge.classList.add('hidden');
@@ -941,6 +922,14 @@ class RoboClicker {
         }
     }
 
+    toggleDrawer() {
+        this.els.bonusDrawer.classList.toggle('open');
+        if (!this.gameState.hasOpenedDrawer) {
+            this.gameState.hasOpenedDrawer = true;
+            this.saveGame();
+        }
+    }
+
     // --- ADS & BONUSES ---
 
     stopGameplay() {
@@ -948,20 +937,12 @@ class RoboClicker {
         if (this.audioCtx && this.audioCtx.state === 'running') {
             this.audioCtx.suspend();
         }
-        // SDK Signal
-        if (window.CrazyGames && window.CrazyGames.SDK) {
-            window.CrazyGames.SDK.game.gameplayStop();
-        }
     }
 
     resumeGameplay() {
         // Unmute Audio
         if (this.audioCtx && this.audioCtx.state === 'suspended') {
             this.audioCtx.resume();
-        }
-        // SDK Signal
-        if (window.CrazyGames && window.CrazyGames.SDK) {
-            window.CrazyGames.SDK.game.gameplayStart();
         }
     }
 
@@ -977,30 +958,9 @@ class RoboClicker {
 
         this.adManager.requestedType = type;
         
-        if (window.CrazyGames && window.CrazyGames.SDK) {
-            window.CrazyGames.SDK.ad.requestAd('rewarded', {
-                adStarted: () => {
-                    console.log("Ad Started");
-                    this.stopGameplay();
-                    if (callbacks.onStart) callbacks.onStart();
-                },
-                adFinished: () => {
-                    console.log("Ad Finished");
-                    this.resumeGameplay();
-                    this.grantReward(type); 
-                    if (callbacks.onFinish) callbacks.onFinish();
-                },
-                adError: (e) => {
-                    console.log("Ad Error", e);
-                    this.resumeGameplay();
-                    if (callbacks.onError) callbacks.onError();
-                }
-            });
-        } else {
-            console.log("Dev Mode: Ad Watched");
-            this.grantReward(type);
-            if (callbacks.onFinish) callbacks.onFinish();
-        }
+        console.log("Dev Mode: Ad Watched");
+        this.grantReward(type);
+        if (callbacks.onFinish) callbacks.onFinish();
     }
 
     startAdCooldown(type) {
@@ -1093,6 +1053,126 @@ class RoboClicker {
     // Alias for HTML onclicks
     watchAd(type) {
         this.watchRewardedAd(type);
+    }
+
+    // --- ADS & BONUSES ---
+
+    stopGameplay() {
+        // Mute Audio
+        if (this.audioCtx && this.audioCtx.state === 'running') {
+            this.audioCtx.suspend();
+        }
+    }
+
+    resumeGameplay() {
+        // Unmute Audio
+        if (this.audioCtx && this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume();
+        }
+    }
+
+    watchRewardedAd(type, callbacks = {}) {
+        // Cooldown Check
+        const now = Date.now();
+        if (this.adManager.cooldowns && this.adManager.cooldowns[type]) {
+            if (now < this.adManager.cooldowns[type]) {
+                alert("Ad is on cooldown!");
+                return;
+            }
+        }
+
+        this.adManager.requestedType = type;
+        
+        console.log("Dev Mode: Ad Watched");
+        this.grantReward(type);
+        if (callbacks.onFinish) callbacks.onFinish();
+    }
+
+    startAdCooldown(type) {
+        if (!this.adManager.cooldowns) this.adManager.cooldowns = {};
+        const duration = 180000; // 3 minutes
+        this.adManager.cooldowns[type] = Date.now() + duration;
+        
+        // Find button and start timer UI
+        const btn = document.querySelector(`.bonus-btn[onclick="game.watchAd('${type}')"]`);
+        if (btn) {
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.classList.add('cooldown-active');
+            
+            const interval = setInterval(() => {
+                const remaining = this.adManager.cooldowns[type] - Date.now();
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    btn.classList.remove('cooldown-active');
+                } else {
+                    const m = Math.floor(remaining / 60000);
+                    const s = Math.floor((remaining % 60000) / 1000);
+                    btn.textContent = `WAIT ${m}:${s.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+    }
+
+    grantReward(type) {
+        let msg = "";
+        const now = Date.now();
+        
+        // Start Cooldown for button-based ads
+        if (type === 'turbo' || type === 'auto' || type === 'lucky') {
+            this.startAdCooldown(type);
+        }
+
+        if (type === 'turbo') {
+            // 1 Minute Boost
+            this.adManager.boosts['turbo'] = now + 60000;
+            msg = "TURBO SURGE: 3x Income for 1 Minute!";
+            this.toggleDrawer();
+        } else if (type === 'auto') {
+            // 30 Seconds Boost
+            this.adManager.boosts['auto'] = now + 30000;
+            msg = "OVERCLOCK: 10x Speed for 30 Seconds!";
+             this.toggleDrawer();
+        } else if (type === 'lucky') {
+            // New Logic: 30% of CURRENT CASH
+            const reward = Math.floor(this.gameState.money * 0.30); 
+            this.addMoney(reward);
+            
+            // Custom UI for Lucky Strike
+            this.showCustomRewardModal(reward);
+            this.toggleDrawer();
+            return; // Skip default alert
+        } else if (type === 'offline_2x') {
+             if (this.adManager.pendingOfflineAmount) {
+                 this.addMoney(this.adManager.pendingOfflineAmount * 2);
+                 this.adManager.pendingOfflineAmount = 0;
+                 this.toggleModal('offline-modal', false);
+                 msg = "Offline Earnings Doubled!";
+             }
+        }
+        
+        // Removed standard alert for better flow, using UI instead
+        if (msg) console.log(msg); // Log instead of blocking alert
+    }
+
+    showCustomRewardModal(amount) {
+        // Reuse reward modal structure or create dynamic one
+        // We can use the existing reward-modal logic if we inject content
+        const overlay = document.createElement('div');
+        overlay.className = 'reward-modal-overlay';
+        overlay.innerHTML = `
+            <div class="reward-modal-content">
+                <h2>LUCKY STRIKE!</h2>
+                <div style="font-size: 1.2rem; color: #555;">YOU HAVE BEEN REWARDED WITH</div>
+                <div class="reward-value">$${this.formatNumber(amount)}</div>
+                <div style="font-size: 1.2rem; color: #555;">CASH!</div>
+                <button class="reward-claim-btn" onclick="this.closest('.reward-modal-overlay').remove()">AWESOME!</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        this.playNotificationSound();
     }
 
     // --- OFFLINE EARNINGS ---
@@ -1292,9 +1372,6 @@ class RoboClicker {
         document.getElementById('open-rebirth-btn').addEventListener('click', () => {
              document.querySelector('.current-mult').textContent = `${this.gameState.rebirthMultiplier}x`;
              document.querySelector('.new-mult').textContent = `${this.gameState.rebirthMultiplier * 2}x`;
-             
-             // MIDGAME AD CHECK on Rebirth Open
-             this.requestMidgameAd();
              
              this.toggleModal('rebirth-modal', true);
         });
