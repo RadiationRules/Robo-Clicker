@@ -2,28 +2,23 @@
 
 const ROBOT_TIERS = [
     { name: "Prototype X-1", multiplier: 1, class: "tier-0", desc: "Basic clicker unit.", rarity: "Common" },
-    { name: "Nano Scout", multiplier: 2, class: "tier-1", desc: "Agile reconnaissance bot.", rarity: "Common" },
-    { name: "Iron Guardian", multiplier: 4, class: "tier-2", desc: "Reinforced steel chassis.", rarity: "Common" },
-    { name: "Cobalt Striker", multiplier: 8, class: "tier-3", desc: "Enhanced speed servos.", rarity: "Rare" },
-    { name: "Plasma Sentinel", multiplier: 16, class: "tier-4", desc: "Energy shield generator.", rarity: "Rare" },
-    { name: "Golden Sovereign", multiplier: 32, class: "tier-5", desc: "Luxury plating, max efficiency.", rarity: "Rare" },
-    { name: "Crimson Destroyer", multiplier: 64, class: "tier-6", desc: "Powered by unstable core.", rarity: "Epic" },
-    { name: "Void Walker", multiplier: 150, class: "tier-7", desc: "Phases through reality.", rarity: "Epic" },
-    { name: "Nebula Titan", multiplier: 300, class: "tier-8", desc: "Forged in star fire.", rarity: "Legendary" },
-    { name: "Galactic Warlord", multiplier: 1000, class: "tier-9", desc: "Commands entire fleets.", rarity: "Legendary" },
-    { name: "Celestial Prime", multiplier: 5000, class: "tier-10", desc: "God-tier technology.", rarity: "Godly" },
-    { name: "Omega Singularity", multiplier: 25000, class: "tier-11", desc: "The end of all things.", rarity: "Omega" },
-    // New Tiers (12-24)
-    { name: "Mecha-Rex", multiplier: 50000, class: "tier-12", desc: "Prehistoric fury reborn in steel.", rarity: "Epic" },
-    { name: "Cyber-Samurai", multiplier: 100000, class: "tier-13", desc: "Blade faster than light.", rarity: "Epic" },
-    { name: "Heavy Siege Unit", multiplier: 250000, class: "tier-14", desc: "Mobile fortress.", rarity: "Legendary" },
-    { name: "Storm Bringer", multiplier: 500000, class: "tier-15", desc: "Harnesses the weather.", rarity: "Legendary" },
-    { name: "Solar Archon", multiplier: 1000000, class: "tier-16", desc: "Powered by a miniature sun.", rarity: "Godly" },
-    { name: "Lunar Phantom", multiplier: 2500000, class: "tier-17", desc: "Silent as the moon's shadow.", rarity: "Godly" },
-    { name: "Time Weaver", multiplier: 5000000, class: "tier-18", desc: "Manipulates the timeline.", rarity: "Godly" },
-    { name: "Dimensional Horror", multiplier: 15000000, class: "tier-19", desc: "It shouldn't exist.", rarity: "Omega" },
-    { name: "Quantum Seraph", multiplier: 50000000, class: "tier-20", desc: "Multi-dimensional angel.", rarity: "Omega" },
-    { name: "The Architect", multiplier: 100000000, class: "tier-21", desc: "Builder of universes.", rarity: "Omega" }
+    { name: "Scout", multiplier: 2, class: "tier-1", desc: "Agile reconnaissance bot.", rarity: "Common" },
+    { name: "Guardian", multiplier: 2, class: "tier-2", desc: "Reinforced steel chassis.", rarity: "Common" },
+    { name: "Cobalt", multiplier: 5, class: "tier-3", desc: "Enhanced speed servos.", rarity: "Rare" },
+    { name: "Sentinel", multiplier: 5, class: "tier-4", desc: "Energy shield generator.", rarity: "Rare" },
+    { name: "Sovereign", multiplier: 5, class: "tier-5", desc: "Luxury plating, max efficiency.", rarity: "Rare" },
+    { name: "Mech", multiplier: 10, class: "tier-6", desc: "Powered by unstable core.", rarity: "Epic" },
+    { name: "Void", multiplier: 10, class: "tier-7", desc: "Phases through reality.", rarity: "Epic" },
+    { name: "Titan", multiplier: 25, class: "tier-8", desc: "Forged in star fire.", rarity: "Legendary" },
+    { name: "Warlord", multiplier: 25, class: "tier-9", desc: "Commands entire fleets.", rarity: "Legendary" },
+    { name: "Heavy Siege Unit", multiplier: 25, class: "tier-14", desc: "Mobile fortress.", rarity: "Legendary" },
+    { name: "Storm Bringer", multiplier: 25, class: "tier-15", desc: "Harnesses the weather.", rarity: "Legendary" },
+    { name: "Solar Archon", multiplier: 50, class: "tier-16", desc: "Powered by a miniature sun.", rarity: "Godly" },
+    { name: "Lunar Phantom", multiplier: 50, class: "tier-17", desc: "Silent as the moon's shadow.", rarity: "Godly" },
+    { name: "Time Weaver", multiplier: 50, class: "tier-18", desc: "Manipulates the timeline.", rarity: "Godly" },
+    { name: "Dimensional Horror", multiplier: 100, class: "tier-19", desc: "It shouldn't exist.", rarity: "Omega" },
+    { name: "Quantum Seraph", multiplier: 100, class: "tier-20", desc: "Multi-dimensional angel.", rarity: "Omega" },
+    { name: "The Architect", multiplier: 100, class: "tier-21", desc: "Builder of universes.", rarity: "Omega" }
 ];
 
 class RoboClicker {
@@ -58,12 +53,10 @@ class RoboClicker {
 
             // Upgrades with descriptions - EXCLUSIVE & FUN
             upgrades: {
-                'cursor': { level: 0, baseCost: 10, basePower: 1, name: "Cursor", desc: "+1 Per Click", type: "click" },
-                'add_drone': { level: 0, baseCost: 100, basePower: 1, name: "Deploy Drone", desc: "Deploys a Combat Unit", type: "action_add_drone" },
-                'upgrade_drone': { level: 0, baseCost: 500, basePower: 1, name: "Upgrade Drone", desc: "Faster Fire & More Speed", type: "action_upgrade_drone" },
-                'crit_money': { level: 0, baseCost: 1000, basePower: 1, name: "Critical Money", desc: "2x Money Chance", type: "effect_crit" },
-                'passive_mult': { level: 0, baseCost: 10000, basePower: 0.05, name: "Multiplier", desc: "+5% All Income", type: "effect_mult" },
-                'discount': { level: 0, baseCost: 50000, basePower: 0.02, name: "Discount", desc: "Cheaper Upgrades", type: "effect_discount" }
+                'Click Value': { level: 0, baseCost: 10, basePower: 1, name: "Click Value", desc: "Increases Click Value", type: "click" },
+                'add_drone': { level: 0, baseCost: 100, basePower: 1, name: "Deploy Drone", desc: "Deploys a Drone to Auto Click For You", type: "action_add_drone" },
+                'upgrade_drone': { level: 0, baseCost: 500, basePower: 1, name: "Upgrade Drone", desc: "Drones Gain More Power", type: "action_upgrade_drone" },
+                'crit_money': { level: 0, baseCost: 1000, basePower: 1, name: "Critical Money", desc: "Better 2x Money Chance Each Click", type: "effect_crit" },
             },
             
             // Drone State
@@ -1150,12 +1143,10 @@ class RoboClicker {
         
         // --- UPDATED ICONS (FontAwesome) ---
         const icons = {
-            'cursor': '<i class="fa-solid fa-arrow-pointer"></i>',
+            'Click Value': '<i class="fa-solid fa-arrow-pointer"></i>',
             'add_drone': '<i class="fa-solid fa-helicopter"></i>', // Drone Icon
             'upgrade_drone': '<i class="fa-solid fa-bolt"></i>', // Power Icon
             'crit_money': '<i class="fa-solid fa-crosshairs"></i>',
-            'passive_mult': '<i class="fa-solid fa-money-bill-trend-up"></i>',
-            'discount': '<i class="fa-solid fa-tags"></i>'
         };
 
         for (const [key, upgrade] of Object.entries(this.gameState.upgrades)) {
@@ -2061,7 +2052,7 @@ class RoboClicker {
             el = document.createElement('div');
             el.id = 'heat-mult-text';
             el.className = 'heat-multiplier-text';
-            el.textContent = "5X";
+            el.textContent = "2X";
             
             // Append to heat system or hero section
             const heatSys = document.querySelector('.heat-system');
