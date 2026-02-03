@@ -64,14 +64,11 @@
             </div>
 
             <div class="hud-controls">
-                <button id="leaderboard-btn" class="icon-btn" title="Leaderboard">
-                    <i class="fa-solid fa-trophy"></i>
-                </button>
                 <button id="index-btn" class="icon-btn" title="Robot Index">
                     <i class="fa-solid fa-book-open"></i>
                     <div id="index-badge" class="notification-badge hidden">!</div>
                 </button>
-                <button id="daily-reward-btn" class="icon-btn hidden" title="Daily Rewards">
+                <button id="daily-reward-btn" class="icon-btn" title="Daily Rewards">
                     <i class="fa-solid fa-calendar-check"></i>
                     <div id="daily-badge" class="notification-badge hidden">!</div>
                 </button>
@@ -118,7 +115,7 @@
                 <div class="click-pad">
                     <!-- HEAT SYSTEM (Energy Core) -->
                     <div class="heat-system">
-                        <div class="heat-multiplier-text" id="heat-mult-text">Multiplier: 2X</div>
+                        <div class="heat-multiplier-text" id="heat-mult-text">2X</div>
                         <div class="heat-bulb" id="heat-bulb"></div>
                         <div class="heat-core-frame">
                             <div class="heat-segment"></div>
@@ -161,7 +158,10 @@
                 <div class="panel-header">
                     <div class="tab-container">
                         <button id="tab-upgrades" class="panel-tab active" onclick="game.switchTab('upgrades')">UPGRADES</button>
-                        <button id="tab-tasks" class="panel-tab" onclick="game.switchTab('tasks')">TASKS</button>
+                        <button id="tab-tasks" class="panel-tab" onclick="game.switchTab('tasks')">
+                            TASKS
+                            <div id="tasks-badge" class="notification-badge hidden" style="top: -5px; right: -5px; width: 20px; height: 20px; font-size: 0.7rem;">!</div>
+                        </button>
                         <button id="tab-gems" class="panel-tab" onclick="game.switchTab('gems')" style="color: #9b59b6;">SHOP</button>
                     </div>
                 </div>
@@ -183,135 +183,131 @@
         </div>
     </div>
 
-    <!-- Bonus Drawer -->
+    <!-- Bonus Drawer (Left Sidebar) -->
     <div id="bonus-drawer" class="bonus-drawer">
-        <div id="drawer-toggle" class="drawer-handle">
-            <i class="fa-solid fa-gift" style="font-size: 1.5rem;"></i>
+        <div id="bonus-btn" class="drawer-handle">
             <div id="bonus-badge" class="notification-badge hidden">!</div>
+            <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div class="drawer-header">
+            <h2 class="drawer-title-text">POWER UPS</h2>
+            <button id="close-bonus-btn" class="close-modal-btn">×</button>
         </div>
         
-        <h2 class="drawer-title">AD REWARDS</h2>
-        
-        <div class="bonus-card">
-            <div class="best-value-badge">HOT!</div>
-            <div class="bonus-icon turbo-icon"><i class="fa-solid fa-fire-flame-curved"></i></div>
-            <div class="bonus-info">
-                <div class="bonus-title">Turbo Surge</div>
-                <div class="bonus-desc">3x Income (60s)</div>
-            </div>
-            <div class="bonus-action">
-                <button class="bonus-btn" onclick="game.watchAd('turbo')">
-                    <span><i class="fa-solid fa-angles-right"></i> <i class="fa-solid fa-gift"></i> WATCH</span>
-                </button>
-            </div>
-        </div>
-
-        <div class="bonus-card">
-            <div class="bonus-icon auto-icon"><i class="fa-solid fa-gears"></i></div>
-            <div class="bonus-info">
-                <div class="bonus-title">Overclock</div>
-                <div class="bonus-desc">10x Speed (30s)</div>
-            </div>
-            <div class="bonus-action">
-                <button class="bonus-btn" onclick="game.watchAd('auto')">
-                    <span><i class="fa-solid fa-angles-right"></i> <i class="fa-solid fa-gift"></i> WATCH</span>
-                </button>
-            </div>
-        </div>
-
-        <div class="bonus-card">
-            <div class="bonus-icon lucky-icon"><i class="fa-solid fa-clover"></i></div>
-            <div class="bonus-info">
-                <div class="bonus-title">Lucky Strike</div>
-                <div class="bonus-desc">Get +30% Cash</div>
-            </div>
-            <div class="bonus-action">
-                <button class="bonus-btn" onclick="game.watchAd('lucky')">
-                    <span><i class="fa-solid fa-angles-right"></i> <i class="fa-solid fa-gift"></i> WATCH</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Daily Rewards Drawer (New) -->
-    <div id="daily-drawer" class="bonus-drawer daily-drawer-style">
-        <div id="daily-drawer-toggle" class="drawer-handle daily-handle">
-            <i class="fa-solid fa-calendar-check" style="font-size: 1.5rem;"></i>
-            <div id="daily-badge-drawer" class="notification-badge hidden">!</div>
-        </div>
-        
-        <h2 class="drawer-title">DAILY LOGIN</h2>
-        
-        <div class="daily-drawer-content">
-             <div id="daily-streak-grid" class="daily-scroll-container">
-                <!-- Injected -->
-            </div>
-            
-            <div class="daily-status">
-                <div id="daily-timer" class="hidden" style="font-size: 1.2rem; color: #555; margin-bottom: 10px;">
-                    Next reward in: 12h 30m
+        <div class="bonus-list">
+            <div id="card-turbo" class="bonus-card">
+                <div class="best-value-badge">HOT!</div>
+                <div class="bonus-icon turbo-icon"><i class="fa-solid fa-fire-flame-curved"></i></div>
+                <div class="bonus-info">
+                    <div class="bonus-title">Turbo Surge</div>
+                    <div class="bonus-desc">3x Income (60s)</div>
                 </div>
-                <button id="claim-daily-btn" class="action-btn" disabled>
-                    CLAIM REWARD
-                </button>
+                <div class="bonus-action">
+                    <button class="bonus-btn" onclick="game.watchAd('turbo')">
+                        <span><i class="fa-solid fa-video"></i> WATCH</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="card-auto" class="bonus-card">
+                <div class="bonus-icon auto-icon"><i class="fa-solid fa-gears"></i></div>
+                <div class="bonus-info">
+                    <div class="bonus-title">Overclock</div>
+                    <div class="bonus-desc">10x Speed (30s)</div>
+                </div>
+                <div class="bonus-action">
+                    <button class="bonus-btn" onclick="game.watchAd('auto')">
+                        <span><i class="fa-solid fa-video"></i> WATCH</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="card-swarm" class="bonus-card">
+                <div class="bonus-icon lucky-icon"><i class="fa-solid fa-robot"></i></div>
+                <div class="bonus-info">
+                    <div class="bonus-title">Bot Swarm</div>
+                    <div class="bonus-desc">Auto Clicks (30s)</div>
+                </div>
+                <div class="bonus-action">
+                    <button class="bonus-btn" onclick="game.watchAd('auto_clicker')">
+                        <span><i class="fa-solid fa-video"></i> WATCH</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Sliding Ad Banner Container -->
+    <div id="sliding-ad-container" class="sliding-ad-container">
+        <!-- Ads spawned here -->
+    </div>
+
+    <!-- Daily Rewards Drawer Removed (Moved to Modal) -->
 
     <!-- Modals -->
     <div id="modal-overlay" class="modal-overlay hidden">
         
-        <!-- Rebirth Modal -->
-        <div id="rebirth-modal" class="game-modal rebirth-theme hidden">
+        <!-- Daily Rewards Modal (New Landscape UI) -->
+        <div id="daily-rewards-modal" class="game-modal wide-modal hidden">
             <div class="modal-header">
-                <h2>PRESTIGE SYSTEM</h2>
-                <button class="close-modal-btn" data-target="rebirth-modal">×</button>
+                <h2>DAILY REWARDS</h2>
+                <button class="close-modal-btn" data-target="daily-rewards-modal">×</button>
             </div>
             <div class="modal-body">
-                <div class="rebirth-info-grid">
-                    <div class="rebirth-column left">
-                        <h3>LIFETIME CASH</h3>
-                        <div class="stat-row"><span class="current-mult highlight">$0</span></div>
-                    </div>
-                    <div class="rebirth-arrow">➔</div>
-                    <div class="rebirth-column right">
-                        <h3>POINTS EARNED</h3>
-                        <div class="stat-row"><span class="new-mult highlight-green">+0 PP</span></div>
-                    </div>
+                <div class="daily-status">
+                    <div id="daily-timer" class="hidden" style="font-size: 1.2rem; color: #777; margin-bottom: 10px; font-weight: bold;">Next Reward in: --h --m</div>
                 </div>
-                
-                <div class="rebirth-cost-box">
-                    <span class="rebirth-cost-display">Next Point: $1M</span>
+                <div id="daily-streak-grid" class="daily-scroll-container">
+                    <!-- Injected Items -->
                 </div>
-
-                <div class="prestige-shop-container">
-                    <div class="shop-header">PRESTIGE SHOP (<span id="prestige-points-display">0</span> PP)</div>
-                    <div id="prestige-shop-grid" class="prestige-grid">
-                        <!-- Injected -->
-                    </div>
-                </div>
-                
-                <div class="rebirth-details">
-                    <div class="detail-box keep">
-                        <h4>YOU KEEP:</h4>
-                        <ul>
-                            <li>✅ Gems & Shop</li>
-                            <li>✅ Achievements</li>
-                            <li>✅ Stats</li>
-                        </ul>
-                    </div>
-                    <div class="detail-box lose">
-                        <h4>RESET:</h4>
-                        <ul>
-                            <li>❌ Money & Upgrades</li>
-                            <li>❌ Drones & Evolution</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <button id="confirm-rebirth-btn" class="rebirth-btn-action">
-                    PRESTIGE NOW
+                <button id="claim-daily-btn" class="action-btn" style="width: 100%; margin-top: 20px;" disabled>
+                    CLAIM REWARD
                 </button>
+            </div>
+        </div>
+
+        <!-- Rebirth Modal -->
+        <div id="rebirth-modal" class="game-modal wide-modal rebirth-theme hidden">
+            <div class="modal-header">
+                <h2>REBIRTH SYSTEM</h2>
+                <button class="close-modal-btn" data-target="rebirth-modal">×</button>
+            </div>
+            <div class="modal-body rebirth-body-landscape">
+                <div class="rebirth-visual-section">
+                    <div class="rebirth-icon-large"><i class="fa-solid fa-infinity"></i></div>
+                    <div class="rebirth-arrows-anim">
+                        <i class="fa-solid fa-angles-up"></i>
+                    </div>
+                </div>
+                
+                <div class="rebirth-content-section">
+                    <div class="rebirth-comparison-box">
+                        <div class="rebirth-stat-col">
+                            <div class="r-label">CURRENT</div>
+                            <div class="r-value current-mult">1x</div>
+                        </div>
+                        <div class="rebirth-arrow-divider">
+                            <i class="fa-solid fa-arrow-right-long"></i>
+                        </div>
+                        <div class="rebirth-stat-col">
+                            <div class="r-label">NEW</div>
+                            <div class="r-value new-mult">2x</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rebirth-info-text">
+                        <div class="info-pill keep"><i class="fa-solid fa-check"></i> KEEP GEMS & ACHIEVEMENTS</div>
+                        <div class="info-pill lose"><i class="fa-solid fa-xmark"></i> RESET MONEY & UPGRADES</div>
+                    </div>
+
+                    <div class="rebirth-cost-box">
+                        <span class="rebirth-cost-display">Cost: $1M</span>
+                    </div>
+
+                    <button id="confirm-rebirth-btn" class="rebirth-btn-action">
+                        REBIRTH NOW (2X)
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -431,20 +427,6 @@
             </div>
         </div>
 
-    </div>
-
-    <!-- Leaderboard Overlay (Custom) -->
-    <div id="leaderboard-overlay" class="leaderboard-dropdown">
-        <div class="leaderboard-header">
-            <h3>GLOBAL LEADERBOARD</h3>
-            <button class="leaderboard-close close-modal-btn" data-target="leaderboard-overlay">×</button>
-        </div>
-        <div class="leaderboard-content">
-             <div class="leaderboard-metric-label">RANKED BY BOTS</div>
-             <div id="leaderboard-scores">
-                 <!-- Injected -->
-             </div>
-        </div>
     </div>
 
     <!-- Daily Reward Button Moved to HUD -->

@@ -91,8 +91,15 @@ const DRONE_COSTS = [500, 50000, 5000000, 500000000, 50000000000];
 const GEM_SHOP_ITEMS = {
     'perm_auto_2x': { name: "Overclock Chip", desc: "Permanent 2x Drone Speed", cost: 200, type: 'perm_buff', mult: 2, icon: 'fa-microchip' },
     'perm_click_2x': { name: "Titanium Finger", desc: "Permanent 2x Click Value", cost: 300, type: 'perm_buff', mult: 2, icon: 'fa-hand-fist' },
-    'perm_gem_rush': { name: "Gem Finder", desc: "Small chance to find Gems on click", cost: 500, type: 'perm_passive', icon: 'fa-gem' }
+    'perm_evo_speed': { name: "Evo Accelerator", desc: "Permanent 2x Evolution Speed", cost: 500, type: 'perm_buff', mult: 2, icon: 'fa-dna' },
+    'mega_drone': { name: "MEGA DRONE", desc: "Deploys a Mega Drone!", cost: 1000, type: 'perm_mega_drone', icon: 'fa-jet-fighter-up' }
 };
+
+const AD_VARIANTS = [
+    { id: 'turbo', title: 'TURBO SURGE', sub: '3x Income (60s)', icon: '🔥', color: 'linear-gradient(90deg, #ff4757, #ff6b81)' },
+    { id: 'auto', title: 'OVERCLOCK', sub: '10x Speed (30s)', icon: '⚡', color: 'linear-gradient(90deg, #2ed573, #7bed9f)' },
+    { id: 'auto_clicker', title: 'BOT SWARM', sub: 'Auto Clicks (30s)', icon: '🤖', color: 'linear-gradient(90deg, #5352ed, #70a1ff)' }
+];
 
 class RoboClicker {
     constructor() {
@@ -119,7 +126,7 @@ class RoboClicker {
             evolution: {
                 stage: 0,
                 xp: 0,
-                maxXp: 25 // Scales with stage
+                maxXp: 150 // Scales with stage
             },
             unlockedRobots: [0], // Array of tier indices
             
@@ -139,7 +146,7 @@ class RoboClicker {
                 'Click Value': { level: 0, baseCost: 10, basePower: 1, name: "Click Value", desc: "Increases Click Value", type: "click" },
                 'add_drone': { level: 0, baseCost: 500, basePower: 1, name: "Deploy Drone", desc: "Deploys a Drone (Max 5)", type: "action_add_drone" },
                 'upgrade_drone': { level: 0, baseCost: 1000, basePower: 1, name: "Upgrade Drone", desc: "Drones Gain More Power", type: "action_upgrade_drone" },
-                'crit_money': { level: 0, baseCost: 1500, basePower: 1, name: "Critical Money", desc: "Better 2X Critical Chance", type: "effect_crit" },
+                'crit_money': { level: 0, baseCost: 1500, basePower: 1, name: "Better Critical Chance", desc: "Increases Critical Chance", type: "effect_crit" },
             },
             
             // Gem Shop State
@@ -161,6 +168,8 @@ class RoboClicker {
             lastSave: Date.now(),
             startTime: Date.now()
         };
+
+        this.lastAdSpawn = Date.now(); // Timer for sliding ads
 
         this.adManager = {
             activeBoost: null, // Legacy flag, kept for safety
@@ -399,6 +408,8 @@ class RoboClicker {
             tasksContainer: document.getElementById('tasks-container'), // New
             gemsContainer: document.getElementById('gems-container'), // New
             
+            tasksBadge: document.getElementById('tasks-badge'), // New Notification Badge
+            
             modalOverlay: document.getElementById('modal-overlay'),
             rebirthModal: document.getElementById('rebirth-modal'),
             dailyModal: document.getElementById('daily-rewards-modal'),
@@ -406,19 +417,18 @@ class RoboClicker {
             offlineModal: document.getElementById('offline-modal'), // New
             indexModal: document.getElementById('index-modal'),
             confirmModal: document.getElementById('confirm-modal'), // New
-            leaderboardOverlay: document.getElementById('leaderboard-overlay'),
             
             rebirthBtn: document.getElementById('open-rebirth-btn'),
-            leaderboardScores: document.getElementById('leaderboard-scores'),
+            dailyRewardBtn: document.getElementById('daily-reward-btn'), // HUD Button
             
             claimOfflineBtn: document.getElementById('claim-offline-btn'), // New
             
             bonusDrawer: document.getElementById('bonus-drawer'),
-            drawerToggle: document.getElementById('drawer-toggle'),
+            drawerToggle: document.getElementById('bonus-btn'), // New Button ID
+            closeBonusBtn: document.getElementById('close-bonus-btn'), // New Close Button
             
-            dailyDrawer: document.getElementById('daily-drawer'),
-            dailyDrawerToggle: document.getElementById('daily-drawer-toggle'),
-            dailyBadgeDrawer: document.getElementById('daily-badge-drawer'),
+            // dailyDrawer removed
+            dailyBadge: document.getElementById('daily-badge'), // HUD Badge
             
             dailyGrid: document.getElementById('daily-streak-grid'),
             claimDailyBtn: document.getElementById('claim-daily-btn'),
@@ -548,10 +558,9 @@ class RoboClicker {
             const el = document.createElement('div');
             el.className = `flying-drone tier-${drone.tier}`;
             
-            // STRICT Positioning: Left side only (0% to 100% of container width)
-            // Container is already restricted to left 350px in CSS
-            // We ensure they stay well within bounds to avoid UI overlap
-            const x = Math.random() * 80 + '%'; 
+            // STRICT Positioning: Center-ish to avoid Left Side UI (Ads)
+            // Container is now 100% width. We avoid left 20% and right 20%.
+            const x = (20 + Math.random() * 60) + '%'; 
             const y = Math.random() * 80 + 10 + '%'; // 10% to 90% vertical buffer
             
             el.style.left = x;
@@ -639,11 +648,70 @@ class RoboClicker {
         if (!this.gameState.drones) return 1;
         let boost = 1;
         this.gameState.drones.forEach(d => {
-            // Tier 1: +10%, Tier 2: +30%, Tier 3: +100%
-            const power = Math.pow(3, d.tier - 1) * 0.1;
-            boost += power;
+            // Handle Mega Drone
+            if (d.tier === 'mega') {
+                boost += 20; // Massive +2000% Boost for Mega Drone
+            } else {
+                // Tier 1: +10%, Tier 2: +30%, Tier 3: +100%
+                // Ensure tier is a number
+                const tierNum = parseInt(d.tier);
+                if (!isNaN(tierNum)) {
+                    const power = Math.pow(3, tierNum - 1) * 0.1;
+                    boost += power;
+                }
+            }
         });
         return boost;
+    }
+
+    triggerSlidingAd() {
+        // --- NEW LOGIC: NOTIFICATION ONLY ---
+        // Instead of spawning a banner, we highlight a card in the drawer and notify the user.
+        
+        // Pick random variant
+        const variants = ['turbo', 'auto', 'auto_clicker'];
+        const type = variants[Math.floor(Math.random() * variants.length)];
+        
+        // Map type to Card ID
+        let cardId = '';
+        if (type === 'turbo') cardId = 'card-turbo';
+        else if (type === 'auto') cardId = 'card-auto';
+        else if (type === 'auto_clicker') cardId = 'card-swarm';
+        
+        const card = document.getElementById(cardId);
+        if (card) {
+            // Remove highlight from others first? No, let them stack or clear all?
+            // Let's clear all first to be neat.
+            ['card-turbo', 'card-auto', 'card-swarm'].forEach(id => {
+                const c = document.getElementById(id);
+                if (c) c.classList.remove('card-highlight');
+            });
+            
+            // Add highlight
+            card.classList.add('card-highlight');
+            
+            // Auto-remove highlight after 15s? Or keep until clicked?
+            // Keep until drawer opened?
+            // Let's remove it after 20s so it doesn't stay forever if ignored.
+            setTimeout(() => {
+                if (card) card.classList.remove('card-highlight');
+            }, 20000);
+        }
+        
+        // Trigger Notification on Drawer Button
+        const bonusBadge = document.getElementById('bonus-badge');
+        if (bonusBadge) {
+            bonusBadge.classList.remove('hidden');
+            bonusBadge.classList.add('active-pulse');
+        }
+        
+        const handle = document.getElementById('bonus-btn');
+        if (handle) {
+            handle.classList.add('attention-shake');
+            setTimeout(() => handle.classList.remove('attention-shake'), 1000);
+        }
+        
+        this.playNotificationSound();
     }
 
     // --- GAMEPLAY LOGIC ---
@@ -686,14 +754,6 @@ class RoboClicker {
             // Track Total Clicks
             this.gameState.totalClicks = (this.gameState.totalClicks || 0) + 1;
             
-            // GEM RUSH CHANCE
-            if (this.gameState.gemUpgrades && this.gameState.gemUpgrades['perm_gem_rush']) {
-                if (Math.random() < 0.005) { // 0.5% chance
-                    this.gameState.gems++;
-                    this.spawnDamageNumber("GEM!", event.clientX, event.clientY - 60, '#9b59b6');
-                }
-            }
-
             this.checkTaskProgress();
         }
 
@@ -722,7 +782,8 @@ class RoboClicker {
         amount *= heatMult;
 
         if (isCrit) {
-            amount *= 2; // Double Money
+            // Apply Critical Damage Multiplier (Base 2x)
+            amount *= 2;
         }
 
         // Midas Chip Logic (Legacy check, kept safe)
@@ -741,7 +802,12 @@ class RoboClicker {
         if (!isAuto) {
             this.gameState.totalBotsDeployed++;
             // Add XP per click
-            let xpGain = 0.5;
+            let xpGain = 2; // Was 1, made easier
+
+            // Gem Shop Evo Boost
+            if (this.gameState.gemUpgrades && this.gameState.gemUpgrades['perm_evo_speed']) {
+                xpGain *= 2;
+            }
             
             // Prestige XP Boost
             if (this.gameState.prestige && this.gameState.prestige.upgrades['pp_xp']) {
@@ -824,23 +890,6 @@ class RoboClicker {
     }
 
     addMoney(amount) {
-        // NOTE: Amount usually passed here is Base Click Power or Auto Base
-        // But for ClickHero, we already applied global mult.
-        // Let's assume addMoney just adds the raw amount passed to it.
-        // Wait, the original addMoney applied multipliers.
-        // I need to be careful.
-        // The original code in clickHero called getClickPower() then addMoney(amount).
-        // addMoney THEN applied all multipliers.
-        
-        // REFACTOR: addMoney should just add money. Multipliers should be calculated at source.
-        // OR: I keep addMoney logic but use getGlobalMultiplier inside it.
-        
-        // Let's check clickHero again.
-        // I changed clickHero to: amount *= globalMult.
-        // So if addMoney ALSO applies globalMult, we double dip.
-        
-        // I will simplify addMoney to just add to state, and move multiplier logic to sources.
-        
         this.gameState.money += amount;
         this.gameState.totalMoney += amount;
         
@@ -850,12 +899,20 @@ class RoboClicker {
     // Helper to calculate auto income with multipliers
     calculateAutoIncome() {
         const baseAuto = this.getAutoPower();
+        const now = Date.now();
+        
+        // --- BOT SWARM LOGIC (Active Clicks Simulation) ---
+        if (this.adManager.boosts['auto_clicker'] && this.adManager.boosts['auto_clicker'] > now) {
+            // "Super Fast" clicks: We simulate this by triggering rapid clicks in the game loop
+            // Since this function returns PASSIVE income, we handle active clicks separately in the loop
+            // BUT, let's inject some base value here just in case? No, better keep it separate.
+        }
+
         if (baseAuto === 0) return 0;
         
         let mult = this.getGlobalMultiplier();
         
         // Auto-specific boost (Overclock)
-        const now = Date.now();
         if (this.adManager.boosts['auto'] && this.adManager.boosts['auto'] > now) {
             mult *= 10;
         }
@@ -952,12 +1009,14 @@ class RoboClicker {
             this.playClickSound(); // UI Click
         } else {
             // --- SMART AD UPGRADE SYSTEM ---
-            // User can't afford. Offer 2x Free Upgrade via Ad?
-            // Trigger if: Not already offering, and cost is somewhat high (not early game spam)
-            if (cost > 100 && !document.querySelector('.free-upgrade-bubble')) {
-                 if (event && (event.target || event.currentTarget)) {
-                     this.showSmartAdOffer(event.currentTarget || event.target, key);
-                 }
+            // ALWAYS offer if can't afford (Aggressive as requested)
+            // "Adds should slide in very often there should always be a slid in add"
+            if (event && (event.target || event.currentTarget)) {
+                 // Remove any existing first to prevent stack
+                 const existing = document.querySelectorAll('.free-upgrade-bubble');
+                 existing.forEach(e => e.remove());
+                 
+                 this.showSmartAdOffer(event.currentTarget || event.target, key);
             }
             this.playNotificationSound(); // Error/Deny sound (reused)
         }
@@ -1021,6 +1080,13 @@ class RoboClicker {
             this.gameState.gems -= item.cost;
             this.gameState.gemUpgrades[key] = true;
             
+            // Mega Drone Handling
+            if (key === 'mega_drone') {
+                 if (!this.gameState.drones) this.gameState.drones = [];
+                 this.gameState.drones.push({ tier: 'mega' });
+                 this.renderFlyingDrones();
+            }
+
             this.playNotificationSound();
             this.saveGame();
             this.updateDisplay();
@@ -1091,71 +1157,76 @@ class RoboClicker {
         
         container.innerHTML = '';
         
-        // Group by Tier
-        const tasksByTier = {};
+        const grid = document.createElement('div');
+        grid.className = 'task-grid'; 
         
-        TASKS_DATA.forEach(task => {
-            if (!tasksByTier[task.tier]) tasksByTier[task.tier] = [];
-            tasksByTier[task.tier].push(task);
+        // 1. Prepare and Sort Tasks
+        const renderList = TASKS_DATA.map(task => {
+            const state = this.gameState.tasks[task.id];
+            const isCompleted = state.progress >= task.target;
+            const isClaimed = state.claimed;
+            
+            // Assign priority for sorting
+            let priority = 1; // Default: Active
+            if (isClaimed) priority = 2; // Bottom
+            if (isCompleted && !isClaimed) priority = 0; // Top
+            
+            return { task, state, isCompleted, isClaimed, priority };
         });
         
-        // Iterate Tiers
-        Object.keys(tasksByTier).sort((a,b) => a-b).forEach(tier => {
-            const tasks = tasksByTier[tier];
-            
-            // Check if tier is unlocked (previous tier completed? or just show all?)
-            // For cleaner UI, let's show all for now, or collapsible sections.
-            // User asked for sections.
-            
-            const section = document.createElement('div');
-            section.className = 'task-section';
-            section.innerHTML = `<div class="task-section-title">TIER ${tier}</div>`;
-            
-            const grid = document.createElement('div');
-            grid.className = 'task-grid'; // CSS Grid for 2x2 layout per tier if space
-            
-            tasks.forEach(task => {
-                const state = this.gameState.tasks[task.id];
-                const isCompleted = state.progress >= task.target;
-                const isClaimed = state.claimed;
-                
-                // If claimed, maybe hide or dim? User wants organized.
-                // Let's keep them but style as done.
-                
-                let pct = (state.progress / task.target) * 100;
-                if (pct > 100) pct = 100;
-                
-                const div = document.createElement('div');
-                div.className = `task-item ${isClaimed ? 'claimed' : ''} ${isCompleted && !isClaimed ? 'completed' : ''}`;
-                
-                let btnHTML = '';
-                if (isClaimed) {
-                    btnHTML = `<button class="task-btn claimed" disabled>DONE</button>`;
-                } else if (isCompleted) {
-                    btnHTML = `<button class="task-btn claim-ready" onclick="game.claimTask('${task.id}')">CLAIM</button>`;
-                } else {
-                    btnHTML = `<button class="task-btn" disabled>${this.formatNumber(state.progress)}/${this.formatNumber(task.target)}</button>`;
-                }
-                
-                div.innerHTML = `
-                    <div class="task-icon"><i class="fa-solid ${task.icon}"></i></div>
-                    <div class="task-info">
-                        <div class="task-desc">${task.desc}</div>
-                        <div class="task-reward">Reward: <span class="gem-text">💎 ${task.reward}</span></div>
-                        <div class="task-progress-track">
-                            <div class="task-progress-fill" style="width: ${pct}%"></div>
-                        </div>
-                    </div>
-                    <div class="task-action">
-                        ${btnHTML}
-                    </div>
-                `;
-                grid.appendChild(div);
-            });
-            
-            section.appendChild(grid);
-            container.appendChild(section);
+        // Sort: Claimable (0) -> Active (1) -> Claimed (2)
+        // Secondary Sort: Active tasks by % completion (descending)
+        renderList.sort((a, b) => {
+            if (a.priority !== b.priority) return a.priority - b.priority;
+            if (a.priority === 1) {
+                const pctA = a.state.progress / a.task.target;
+                const pctB = b.state.progress / b.task.target;
+                return pctB - pctA; // Higher % first
+            }
+            return a.task.tier - b.task.tier; // Default tier sort
         });
+        
+        // 2. Render Sorted List
+        renderList.forEach(item => {
+            const { task, state, isCompleted, isClaimed, priority } = item;
+            
+            let pct = (state.progress / task.target) * 100;
+            if (pct > 100) pct = 100;
+            
+            const div = document.createElement('div');
+            // Add priority class for CSS styling hooks
+            let priorityClass = 'priority-active';
+            if (priority === 0) priorityClass = 'priority-claim';
+            if (priority === 2) priorityClass = 'priority-done';
+            
+            div.className = `task-item ${priorityClass}`;
+            
+            let btnHTML = '';
+            if (isClaimed) {
+                btnHTML = `<button class="task-btn claimed" disabled><i class="fa-solid fa-check"></i> DONE</button>`;
+            } else if (isCompleted) {
+                btnHTML = `<button class="task-btn claim-ready" onclick="game.claimTask('${task.id}')">CLAIM</button>`;
+            } else {
+                btnHTML = `<button class="task-btn" disabled>${this.formatNumber(state.progress)} / ${this.formatNumber(task.target)}</button>`;
+            }
+            
+            div.innerHTML = `
+                <div class="task-icon"><i class="fa-solid ${task.icon}"></i></div>
+                <div class="task-info">
+                    <div class="task-desc">${task.desc}</div>
+                    <div class="task-reward">Reward: <span class="gem-val">💎 ${task.reward}</span></div>
+                    <div class="task-progress-track">
+                        <div class="task-progress-fill" style="width: ${pct}%"></div>
+                    </div>
+                </div>
+                <div class="task-action">
+                    ${btnHTML}
+                </div>
+            `;
+            grid.appendChild(div);
+        });
+        
+        container.appendChild(grid);
     }
 
     showSmartAdOffer(targetBtn, key) {
@@ -1165,25 +1236,57 @@ class RoboClicker {
 
         const bubble = document.createElement('div');
         bubble.className = 'free-upgrade-bubble';
-        bubble.innerHTML = `<span class="ad-icon">📺</span> GET 2x FREE`;
+        // Updated casual bubble look
+        bubble.innerHTML = `
+            <div class="ticket-content">
+                <i class="fa-solid fa-gift"></i>
+                <span>+2 FREE</span>
+            </div>
+        `;
         
-        // Position relative to button
+        // Position relative to button - Overlapping the button slightly
         const rect = targetBtn.getBoundingClientRect();
-        bubble.style.left = (rect.left + rect.width / 2 - 50) + 'px'; // Center-ish
-        bubble.style.top = (rect.top - 40) + 'px'; // Above
+        // Position it on the right side, tilted
+        bubble.style.left = (rect.width - 80) + 'px'; 
+        bubble.style.top = '-25px'; 
         
-        bubble.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.watchRewardedAd(`smart_upgrade_${key}`);
-            bubble.remove();
-        });
+        // Append to the button itself so it moves with it? 
+        // No, upgrade list rebuilds often. Append to button parent or body.
+        // If we append to body we need absolute coords.
+        // Let's append to the button container (the .upgrade-item div)
+        // targetBtn is the button. The parent is .upgrade-item
         
-        document.body.appendChild(bubble);
+        // Actually, the caller passes targetBtn which is the BUTTON or the UPGRADE ITEM?
+        // In buyUpgrade: event.currentTarget || event.target.
+        // If user clicks button, currentTarget is button.
+        // If user clicks item, currentTarget is item.
         
-        // Auto remove after 4 seconds
-        setTimeout(() => {
-            if (bubble.parentNode) bubble.remove();
-        }, 4000);
+        let container = targetBtn;
+        if (!container.classList.contains('upgrade-item')) {
+            container = container.closest('.upgrade-item');
+        }
+        
+        if (container) {
+            container.style.position = 'relative'; // Ensure relative positioning
+            container.appendChild(bubble);
+            
+            // Override styles for relative positioning
+            bubble.style.position = 'absolute';
+            bubble.style.left = 'auto';
+            bubble.style.right = '10px';
+            bubble.style.top = '-15px';
+            
+            bubble.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.watchRewardedAd(`smart_upgrade_${key}`);
+                bubble.remove();
+            });
+            
+            // Longer duration: 8 seconds
+            setTimeout(() => {
+                if (bubble.parentNode) bubble.remove();
+            }, 8000);
+        }
     }
 
     spawnMiniUpgradePopup(targetElement) {
@@ -1246,43 +1349,60 @@ class RoboClicker {
         return Math.max(1, cost);
     }
 
-    getPrestigeInfo() {
-        // Formula: Improved for better pacing
-        // Was: Sqrt(TotalMoney / 1,000,000) -> Too slow
-        // New: Sqrt(TotalMoney / 25,000) -> Much faster start
-        // $25k = 1 Point
-        // $100k = 2 Points
-        // $1M = 6 Points
-        // $100M = 63 Points
-        const totalLifetime = this.gameState.totalMoney;
-        const divisor = 25000;
-        const potentialTotalPoints = Math.floor(Math.sqrt(totalLifetime / divisor));
-        
-        const claimed = this.gameState.prestige.claimedPoints || 0;
-        const pending = Math.max(0, potentialTotalPoints - claimed);
-        
-        // Next point target
-        // Inverse of Sqrt(X / Divisor) = Y  =>  X = Y^2 * Divisor
-        const nextPointTarget = Math.pow((claimed + pending + 1), 2) * divisor;
-        
-        return { pending, nextPointTarget, current: this.gameState.prestige.points };
+    getRebirthCost() {
+        // Base Cost: 1M
+        // Scales 5x each time: 1M, 5M, 25M, 125M...
+        const base = 1000000;
+        const count = this.gameState.rebirthCount || 0;
+        return base * Math.pow(5, count);
     }
 
-    prestige() {
-        const { pending } = this.getPrestigeInfo();
-        if (pending <= 0) return;
+    rebirth() {
+        const cost = this.getRebirthCost();
+        if (this.gameState.money < cost) return;
 
         // 1. Close Modal
         this.toggleModal('rebirth-modal', false);
 
-        // 2. Show Overlay
+        // 2. Trigger Midgame Ad (Interstitial)
+        if (window.CrazyGames && window.CrazyGames.SDK) {
+            window.CrazyGames.SDK.ad.requestAd('midgame', {
+                adStarted: () => {
+                    console.log("Rebirth Ad Started");
+                    this.stopGameplay();
+                },
+                adFinished: () => {
+                    console.log("Rebirth Ad Finished");
+                    this.resumeGameplay();
+                    this.triggerRebirthSequence();
+                },
+                adError: (error) => {
+                    console.warn("Rebirth Ad Error:", error);
+                    this.resumeGameplay();
+                    this.triggerRebirthSequence();
+                }
+            });
+        } else {
+            // Dev Mode
+            console.log("Dev: Rebirth Ad Skipped");
+            this.triggerRebirthSequence();
+        }
+    }
+
+    triggerRebirthSequence() {
+        // 3. Show Overlay & Animation
         const overlay = document.getElementById('rebirth-overlay');
         const multDisplay = document.getElementById('rebirth-mult-display');
         
         // Visual Update
-        if (multDisplay) multDisplay.textContent = `+${this.formatNumber(pending)} PP`;
-        document.querySelector('.rebirth-title-anim').textContent = "PRESTIGE!";
-        document.querySelector('.rebirth-sub-anim').textContent = "SYSTEM REBOOTED";
+        const newMult = Math.pow(2, (this.gameState.rebirthCount || 0) + 1);
+        if (multDisplay) multDisplay.textContent = `${newMult}X`;
+        
+        const titleAnim = document.querySelector('.rebirth-title-anim');
+        if (titleAnim) titleAnim.textContent = "REBIRTH!";
+        
+        const subAnim = document.querySelector('.rebirth-sub-anim');
+        if (subAnim) subAnim.textContent = "SYSTEM UPGRADED";
         
         if (overlay) {
             overlay.classList.add('active');
@@ -1290,22 +1410,21 @@ class RoboClicker {
             this.playNotificationSound();
             
             setTimeout(() => {
-                this.performPrestigeReset(pending);
+                this.performRebirthReset();
                 overlay.classList.remove('active');
             }, 4000);
         } else {
-            this.performPrestigeReset(pending);
+            this.performRebirthReset();
         }
     }
 
-    performPrestigeReset(pendingPoints) {
-        // Add Points
-        this.gameState.prestige.points += pendingPoints;
-        this.gameState.prestige.claimedPoints = (this.gameState.prestige.claimedPoints || 0) + pendingPoints;
-        this.gameState.prestige.totalResetCount++;
+    performRebirthReset() {
+        // Increment Rebirth Count
+        this.gameState.rebirthCount = (this.gameState.rebirthCount || 0) + 1;
+        this.gameState.rebirthMultiplier = Math.pow(2, this.gameState.rebirthCount);
 
         // RESET GAME STATE
-        // NOTE: totalMoney (Lifetime) is PRESERVED. Do not reset it.
+        // Reset Money (Keep Gems)
         this.gameState.money = 0;
         this.gameState.clickPower = 1;
         this.gameState.autoClickPower = 0;
@@ -1319,10 +1438,10 @@ class RoboClicker {
         this.gameState.drones = [];
         this.gameState.droneLevel = 1;
         
-        // Reset Evolution (Optional? Let's reset for replayability)
+        // Reset Evolution
         this.gameState.evolution.stage = 0;
         this.gameState.evolution.xp = 0;
-        this.gameState.evolution.maxXp = 25;
+        this.gameState.evolution.maxXp = 150;
         
         // Reset Heat
         this.heat = 0;
@@ -1333,81 +1452,6 @@ class RoboClicker {
         this.renderUpgrades();
         this.renderFlyingDrones();
         this.applyRobotVisuals();
-        
-        // Render Prestige Shop (if open)
-        this.renderPrestigeShop();
-    }
-
-    // --- PRESTIGE SHOP ---
-    getPrestigeShopItems() {
-        return {
-            // Improved Scaling (Cheaper upgrades)
-            'pp_mult': { name: "Synergy Core", desc: "+50% Money Multiplier", baseCost: 1, costScale: 1.3, max: 50, type: 'mult' },
-            'pp_start': { name: "Starter Kit", desc: "Start with +$5,000", baseCost: 2, costScale: 1.5, max: 10, type: 'start_cash' },
-            'pp_xp': { name: "Neural Link", desc: "+20% XP Gain", baseCost: 3, costScale: 1.2, max: 20, type: 'xp' },
-            'pp_luck': { name: "Fortune Chip", desc: "+5% Crit Chance", baseCost: 5, costScale: 1.3, max: 10, type: 'luck' }
-        };
-    }
-    
-    renderPrestigeShop() {
-        const container = document.getElementById('prestige-shop-grid');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        const items = this.getPrestigeShopItems();
-        
-        for (const [key, item] of Object.entries(items)) {
-            const currentLevel = (this.gameState.prestige.upgrades[key] || 0);
-            const cost = Math.floor(item.baseCost * Math.pow(item.costScale, currentLevel));
-            const isMax = currentLevel >= item.max;
-            
-            const canAfford = this.gameState.prestige.points >= cost && !isMax;
-            
-            const div = document.createElement('div');
-            div.className = `prestige-item ${canAfford ? 'can-afford' : ''} ${isMax ? 'maxed' : ''}`;
-            
-            div.innerHTML = `
-                <div class="p-item-header">
-                    <span class="p-name">${item.name}</span>
-                    <span class="p-lvl">Lvl ${currentLevel}/${item.max}</span>
-                </div>
-                <div class="p-desc">${item.desc}</div>
-                <button class="p-buy-btn" ${!canAfford ? 'disabled' : ''}>
-                    ${isMax ? 'MAX' : `${cost} PP`}
-                </button>
-            `;
-            
-            if (canAfford) {
-                div.querySelector('button').addEventListener('click', () => this.buyPrestigeUpgrade(key, cost));
-            }
-            
-            container.appendChild(div);
-        }
-        
-        // Update Points Display
-        const pointsDisplay = document.getElementById('prestige-points-display');
-        if (pointsDisplay) pointsDisplay.textContent = this.formatNumber(this.gameState.prestige.points);
-    }
-    
-    buyPrestigeUpgrade(key, cost) {
-        if (this.gameState.prestige.points >= cost) {
-            this.gameState.prestige.points -= cost;
-            this.gameState.prestige.upgrades[key] = (this.gameState.prestige.upgrades[key] || 0) + 1;
-            
-            this.playNotificationSound();
-            this.saveGame();
-            this.renderPrestigeShop();
-            this.updateDisplay(); // Apply effects immediately if needed
-        }
-    }
-
-    getRebirthCost() {
-        // Legacy Rebirth Code - Kept to prevent crash if called, but redirecting UI to Prestige
-        return 999999999999; 
-    }
-
-    rebirth() {
-       this.prestige(); // Redirect
     }
 
 
@@ -1452,20 +1496,12 @@ class RoboClicker {
             }
         }
         
-        // Bonus (Drawer)
+        // Bonus (Drawer) Badge logic managed by triggerSlidingAd mostly, 
+        // but we can ensure it hides if drawer is open?
         const bonusBadge = document.getElementById('bonus-badge');
-        if (bonusBadge) {
-             const now = Date.now();
-             
-             // Intro Nudge: Show after 30s if never opened
-             const sessionTime = now - this.gameState.startTime;
-             const showIntro = (sessionTime > 30000 && !this.gameState.hasOpenedDrawer);
-
-             if (showIntro) {
-                 bonusBadge.classList.remove('hidden');
-             } else {
-                 bonusBadge.classList.add('hidden');
-             }
+        if (bonusBadge && this.els.bonusDrawer && this.els.bonusDrawer.classList.contains('open')) {
+             bonusBadge.classList.add('hidden');
+             bonusBadge.classList.remove('active-pulse');
         }
         
         // Index
@@ -1478,6 +1514,25 @@ class RoboClicker {
                 indexBadge.classList.remove('hidden');
             } else {
                 indexBadge.classList.add('hidden');
+            }
+        }
+
+        // Tasks Notification
+        let hasCompletedTasks = false;
+        TASKS_DATA.forEach(task => {
+            const state = this.gameState.tasks[task.id];
+            if (state && !state.claimed && state.progress >= task.target) {
+                hasCompletedTasks = true;
+            }
+        });
+        
+        if (this.els.tasksBadge) {
+            if (hasCompletedTasks) {
+                this.els.tasksBadge.classList.remove('hidden');
+                this.els.tasksBadge.classList.add('active-pulse');
+            } else {
+                this.els.tasksBadge.classList.add('hidden');
+                this.els.tasksBadge.classList.remove('active-pulse');
             }
         }
     }
@@ -1495,22 +1550,20 @@ class RoboClicker {
         
         // PRESTIGE BUTTON UPDATE
         if (this.els.rebirthBtn) {
-             const { pending } = this.getPrestigeInfo();
-             this.els.rebirthBtn.innerHTML = `<i class="fa-solid fa-crown"></i> PRESTIGE ${pending > 0 ? `(+${pending})` : ''}`;
+             const cost = this.getRebirthCost();
+             const canAfford = this.gameState.money >= cost;
              
-             // Unlock at 1M lifetime or if already prestiged
-             const canPrestige = this.gameState.totalMoney >= 1000000 || (this.gameState.prestige && this.gameState.prestige.totalResetCount > 0);
+             this.els.rebirthBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> REBIRTH <span class="rebirth-cost">$${this.formatNumber(cost)}</span>`;
              
-             if (canPrestige) {
-                 this.els.rebirthBtn.style.display = 'block';
-                 this.els.rebirthBtn.style.opacity = '1';
-                 if (pending > 0) {
-                     this.els.rebirthBtn.classList.add('rebirth-glow');
-                 } else {
-                     this.els.rebirthBtn.classList.remove('rebirth-glow');
-                 }
+             // Always show Rebirth button as per user request
+             this.els.rebirthBtn.style.display = 'block';
+             
+             if (canAfford) {
+                 this.els.rebirthBtn.classList.add('rebirth-glow');
+                 this.els.rebirthBtn.style.filter = ''; // Remove inline filter
              } else {
-                 this.els.rebirthBtn.style.display = 'none';
+                 this.els.rebirthBtn.classList.remove('rebirth-glow');
+                 this.els.rebirthBtn.style.filter = ''; // Let CSS handle it
              }
         }
 
@@ -1683,7 +1736,8 @@ class RoboClicker {
         // Logic
         this.gameState.evolution.stage = nextStage;
         this.gameState.evolution.xp = 0;
-        this.gameState.evolution.maxXp = Math.floor(this.gameState.evolution.maxXp * 1.5); // Scale XP req
+        // Made easier: Scaling reduced from 1.5 to 1.35
+        this.gameState.evolution.maxXp = Math.floor(this.gameState.evolution.maxXp * 1.35); 
         
         // Unlock
         if (!this.gameState.unlockedRobots.includes(nextStage)) {
@@ -1767,6 +1821,7 @@ class RoboClicker {
             const div = document.createElement('div');
             // Explicitly set 'can-afford' class based on logic
             div.className = `upgrade-item ${canAfford ? 'can-afford' : ''}`;
+            div.setAttribute('data-key', key); // Essential for Smart Ad Targeting
             div.innerHTML = `
                 <div class="upgrade-icon-box">${icons[key] || '<i class="fa-solid fa-wrench"></i>'}</div>
                 <div class="upgrade-content">
@@ -2080,7 +2135,8 @@ class RoboClicker {
     }
     
     toggleDailyDrawer() {
-        this.els.dailyDrawer.classList.toggle('open');
+        // Legacy function, replaced by modal
+        this.toggleModal('daily-rewards-modal', true);
     }
 
     watchRewardedAd(type, callbacks = {}) {
@@ -2185,12 +2241,12 @@ class RoboClicker {
             // 1 Minute Boost
             this.adManager.boosts['turbo'] = now + 60000;
             msg = "TURBO SURGE: 3x Income for 1 Minute!";
-            this.toggleBonusDrawer();
+            // this.toggleBonusDrawer(); // Removed per request
         } else if (type === 'auto') {
             // 30 Seconds Boost
             this.adManager.boosts['auto'] = now + 30000;
             msg = "OVERCLOCK: 10x Speed for 30 Seconds!";
-             this.toggleBonusDrawer();
+             // this.toggleBonusDrawer(); // Removed per request
         } else if (type === 'lucky') {
             // New Logic: 30% of CURRENT CASH
             const reward = Math.floor(this.gameState.money * 0.30); 
@@ -2198,8 +2254,13 @@ class RoboClicker {
             
             // Custom UI for Lucky Strike
             this.showCustomRewardModal(reward);
-            this.toggleBonusDrawer();
+            // this.toggleBonusDrawer(); // Removed per request
             return; // Skip default alert
+        } else if (type === 'auto_clicker') {
+            // Auto Clicker Ad: 30s of clicks
+            this.adManager.boosts['auto_clicker'] = now + 30000;
+            msg = "AUTO CLICKER: Bot Swarm Activated!";
+            // this.toggleBonusDrawer(); // Removed per request
         } else if (type === 'offline_2x') {
              if (this.adManager.pendingOfflineAmount) {
                  this.addMoney(this.adManager.pendingOfflineAmount * 2);
@@ -2218,8 +2279,9 @@ class RoboClicker {
                     this.addDrone(this.gameState.droneLevel || 1);
                 }
                 
-                msg = `SMART UPGRADE: +2 Levels for ${this.gameState.upgrades[key].name}!`;
-                this.spawnUpgradedPopup(null); // Global pop
+                // NEW: Show Reward UI Modal
+                this.showCustomRewardModal(2, false, "2x FREE UPGRADES RECEIVED!");
+                
                 this.updateDisplay();
                 this.renderUpgrades();
                 this.saveGame();
@@ -2230,21 +2292,34 @@ class RoboClicker {
         if (msg) console.log(msg); // Log instead of blocking alert
     }
 
-    showCustomRewardModal(amount, isGems = false) {
+    showCustomRewardModal(amount, isGems = false, customTitle = null) {
         // Reuse reward modal structure or create dynamic one
         // We can use the existing reward-modal logic if we inject content
         const overlay = document.createElement('div');
         overlay.className = 'reward-modal-overlay';
-        const symbol = isGems ? '💎' : '$';
+        const symbol = isGems ? '💎' : (customTitle ? '' : '$');
         const colorClass = isGems ? 'color: #9b59b6;' : 'color: var(--success);';
-        const label = isGems ? 'GEMS' : 'CASH';
+        
+        let label = isGems ? 'GEMS' : 'CASH';
+        let title = isGems ? 'TASK COMPLETE!' : 'LUCKY STRIKE!';
+        
+        // Handle Custom Title (e.g. Free Upgrades)
+        if (customTitle) {
+            title = "REWARD RECEIVED!";
+            label = customTitle;
+        }
+
+        let valueDisplay = `${symbol}${this.formatNumber(amount)}`;
+        if (customTitle && !isGems) {
+             valueDisplay = `+${amount} LEVELS`; // Specific for upgrades
+        }
         
         overlay.innerHTML = `
             <div class="reward-modal-content">
-                <h2>${isGems ? 'TASK COMPLETE!' : 'LUCKY STRIKE!'}</h2>
-                <div style="font-size: 1.2rem; color: #555;">YOU HAVE BEEN REWARDED WITH</div>
-                <div class="reward-value" style="${colorClass}">${symbol}${this.formatNumber(amount)}</div>
-                <div style="font-size: 1.2rem; color: #555;">${label}!</div>
+                <h2>${title}</h2>
+                <div style="font-size: 1.2rem; color: #555;">YOU HAVE RECEIVED</div>
+                <div class="reward-value" style="${colorClass}">${valueDisplay}</div>
+                <div style="font-size: 1.2rem; color: #555;">${label}</div>
                 <button class="reward-claim-btn" onclick="this.closest('.reward-modal-overlay').remove()">AWESOME!</button>
             </div>
         `;
@@ -2263,19 +2338,41 @@ class RoboClicker {
             const seconds = Math.floor(diff / 1000);
             
             // Calculate earnings
-            const autoIncome = this.getAutoPower();
-            const tierMult = ROBOT_TIERS[this.gameState.evolution.stage].multiplier;
-
-            const rebirthMult = this.gameState.rebirthMultiplier;
+            // 1. Drones (Main source since Auto Upgrades removed)
+            const droneLvl = this.gameState.droneLevel || 1;
+            const droneCount = this.gameState.drones ? this.gameState.drones.length : 0;
+            const clickPower = this.getClickPower();
             
-            // Base earnings per second = (autoIncome * tierMult * passiveMult * rebirthMult)
-            // Note: In game loop we divide by 10 per 100ms, so total is 1x per second.
+            // Avg Shots Per Sec: (0.1 + lvl*0.02) * 10 (ticks)
+            let fireChance = 0.1 + (droneLvl * 0.02);
+            if (fireChance > 0.6) fireChance = 0.6; // Cap
+            const shotsPerSec = fireChance * 10;
+            
+            // Damage Per Shot: 20% Click Power * Level
+            const dmgPerShot = Math.max(10, clickPower * 0.2 * droneLvl);
+            
+            const droneIncomePerSec = droneCount * shotsPerSec * dmgPerShot;
+
+            // 2. Multipliers
+            // We use getGlobalMultiplier() but we need to exclude TEMPORARY boosts like Turbo
+            // Reconstruct permanent multiplier:
+            let globalMult = 1;
+            globalMult *= this.gameState.rebirthMultiplier;
+            globalMult *= ROBOT_TIERS[this.gameState.evolution.stage].multiplier;
             
             const passiveUpgrade = this.gameState.upgrades['passive_mult'];
-            const passiveMult = passiveUpgrade ? 1 + (passiveUpgrade.level * passiveUpgrade.basePower) : 1;
+            if (passiveUpgrade) globalMult *= (1 + (passiveUpgrade.level * passiveUpgrade.basePower));
+            
+            globalMult *= this.getDroneBoost();
+            
+            if (this.gameState.prestige) {
+                 globalMult *= (1 + (this.gameState.prestige.points * 0.10));
+                 const synLevel = this.gameState.prestige.upgrades['pp_mult'] || 0;
+                 if (synLevel > 0) globalMult *= (1 + (synLevel * 0.5));
+            }
 
-            const rawPerSec = autoIncome * tierMult * passiveMult * rebirthMult;
-            const totalOffline = Math.floor(rawPerSec * seconds * 0.8); // 80% efficiency
+            const totalPerSec = droneIncomePerSec * globalMult;
+            const totalOffline = Math.floor(totalPerSec * seconds * 0.5); // 50% efficiency for offline
             
             if (totalOffline > 0) {
                 this.adManager.pendingOfflineAmount = totalOffline;
@@ -2308,12 +2405,14 @@ class RoboClicker {
         const productionPerSec = this.getAutoPower() + (this.getClickPower() * 2); // Assume 2 clicks/sec avg
         const playerPower = Math.max(100, productionPerSec * 60);
         
-        this.els.dailyGrid.innerHTML = '';
-        this.els.dailyGrid.className = 'daily-scroll-container'; // Update class for new CSS
+        if (this.els.dailyGrid) {
+            this.els.dailyGrid.innerHTML = '';
+            // this.els.dailyGrid.className = 'daily-scroll-container'; // Class already set in HTML
+        }
 
         // Show a window of days: previous 1, current, next 5 (More "infinite" feel)
         const startDay = currentStreak; 
-        const numToShow = 7; // Increased to show more future
+        const numToShow = 5; 
 
         for (let i = 0; i < numToShow; i++) {
             const dayIndex = startDay + i;
@@ -2338,31 +2437,35 @@ class RoboClicker {
                 <div class="day-icon-large">${icon}</div>
                 <div class="day-reward-text">${label}</div>
             `;
-            this.els.dailyGrid.appendChild(el);
+            if (this.els.dailyGrid) this.els.dailyGrid.appendChild(el);
         }
 
         if (timeSince > oneDay) {
-            this.els.claimDailyBtn.disabled = false;
-            this.els.claimDailyBtn.textContent = "CLAIM REWARD";
-            this.els.dailyTimer.classList.add('hidden');
+            if (this.els.claimDailyBtn) {
+                this.els.claimDailyBtn.disabled = false;
+                this.els.claimDailyBtn.textContent = "CLAIM REWARD";
+            }
+            if (this.els.dailyTimer) this.els.dailyTimer.classList.add('hidden');
             
             // Only auto-open if requested
             if (autoOpen) {
-                this.toggleDailyDrawer();
+                this.toggleModal('daily-rewards-modal', true);
             }
             
             // ALWAYS show notification badge if ready
-            const badge = document.getElementById('daily-badge');
-            if (badge) badge.classList.remove('hidden');
+            if (this.els.dailyBadge) this.els.dailyBadge.classList.remove('hidden');
+            if (this.els.dailyRewardBtn) this.els.dailyRewardBtn.classList.add('pulse-btn');
             
         } else {
-            this.els.claimDailyBtn.disabled = true;
-            this.els.dailyTimer.classList.remove('hidden');
-            this.updateDailyTimer();
+            if (this.els.claimDailyBtn) this.els.claimDailyBtn.disabled = true;
+            if (this.els.dailyTimer) {
+                this.els.dailyTimer.classList.remove('hidden');
+                this.updateDailyTimer();
+            }
             
             // Hide badge if not ready
-            const badge = document.getElementById('daily-badge');
-            if (badge) badge.classList.add('hidden');
+            if (this.els.dailyBadge) this.els.dailyBadge.classList.add('hidden');
+            if (this.els.dailyRewardBtn) this.els.dailyRewardBtn.classList.remove('pulse-btn');
         }
     }
 
@@ -2445,35 +2548,47 @@ class RoboClicker {
         this.els.hero.addEventListener('mousedown', handleInteraction);
         this.els.hero.addEventListener('touchstart', handleInteraction);
 
-        this.els.drawerToggle.addEventListener('click', this.toggleBonusDrawer);
+        // New Bonus Drawer Listeners
+        if (this.els.drawerToggle) {
+            this.els.drawerToggle.addEventListener('click', this.toggleBonusDrawer);
+        }
+        if (this.els.closeBonusBtn) {
+            this.els.closeBonusBtn.addEventListener('click', this.toggleBonusDrawer);
+        }
         
         if (this.els.dailyDrawerToggle) {
             this.els.dailyDrawerToggle.addEventListener('click', this.toggleDailyDrawer);
         }
 
+        // Sliding Ad Banner Click - Handled in triggerSlidingAd creation logic now
+        
         document.getElementById('open-rebirth-btn').addEventListener('click', () => {
-             const { pending, nextPointTarget, current } = this.getPrestigeInfo();
+             // Calculate Multipliers
+             const currentMult = Math.pow(2, this.gameState.rebirthCount || 0);
+             const newMult = Math.pow(2, (this.gameState.rebirthCount || 0) + 1);
              
-             document.querySelector('.current-mult').textContent = this.formatNumber(this.gameState.totalMoney);
-             document.querySelector('.new-mult').textContent = `+${pending} PP`;
+             // Update UI
+             document.querySelector('.current-mult').textContent = `${currentMult}x`;
+             document.querySelector('.new-mult').textContent = `${newMult}x`;
              
+             // Update Cost
+             const cost = this.getRebirthCost();
              const costDisplay = document.querySelector('.rebirth-cost-display');
-             if (costDisplay) costDisplay.textContent = `Next Point: $${this.formatNumber(nextPointTarget)}`;
+             if (costDisplay) costDisplay.textContent = `Cost: $${this.formatNumber(cost)}`;
              
              // Update Button Text
              const actionBtn = document.getElementById('confirm-rebirth-btn');
              if (actionBtn) {
-                 if (pending > 0) {
-                    actionBtn.textContent = `PRESTIGE FOR ${pending} POINTS`;
+                 if (this.gameState.money >= cost) {
+                    actionBtn.textContent = `REBIRTH NOW (${newMult}X)`;
                     actionBtn.disabled = false;
+                    actionBtn.classList.remove('disabled');
                  } else {
-                    actionBtn.textContent = `NEED MORE MONEY`;
+                    actionBtn.textContent = `NEED $${this.formatNumber(cost)}`;
                     actionBtn.disabled = true;
+                    actionBtn.classList.add('disabled');
                  }
              }
-             
-             // Render Shop
-             this.renderPrestigeShop();
              
              this.toggleModal('rebirth-modal', true);
         });
@@ -2482,23 +2597,15 @@ class RoboClicker {
         document.querySelectorAll('.close-modal-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const targetId = btn.getAttribute('data-target');
-                
-                // If it's the leaderboard overlay (custom dropdown)
-                if (targetId === 'leaderboard-overlay') {
-                    document.getElementById(targetId).classList.remove('active');
-                } 
-                // Standard Modals
-                else {
-                    this.toggleModal(null, false);
-                }
+                this.toggleModal(null, false);
             });
         });
 
         document.getElementById('confirm-rebirth-btn').addEventListener('click', () => this.rebirth());
         
         document.getElementById('daily-reward-btn').addEventListener('click', () => {
-            this.checkDailyReward();
-            this.toggleDailyDrawer(); // Use Drawer instead of Modal
+            this.checkDailyReward(false); // Update UI
+            this.toggleModal('daily-rewards-modal', true);
         });
         this.els.claimDailyBtn.addEventListener('click', () => this.claimDaily());
         
@@ -2578,18 +2685,6 @@ class RoboClicker {
              this.toggleModal('index-modal', true);
         });
 
-        // Toggle Leaderboard Modal
-        document.getElementById('leaderboard-btn').addEventListener('click', () => {
-             const dropdown = this.els.leaderboardOverlay;
-             // Close others
-             this.toggleModal(null, false);
-             
-             dropdown.classList.toggle('active');
-             if (dropdown.classList.contains('active')) {
-                 this.fetchLeaderboard();
-             }
-        });
-
         // Offline Modal Events
         document.getElementById('claim-offline-btn').addEventListener('click', () => {
              if (this.adManager.pendingOfflineAmount) {
@@ -2602,67 +2697,6 @@ class RoboClicker {
         document.getElementById('claim-offline-2x-btn').addEventListener('click', () => {
              this.watchRewardedAd('offline_2x');
         });
-    }
-
-    async fetchLeaderboard() {
-         const container = this.els.leaderboardScores;
-         container.innerHTML = '<div style="padding:20px; text-align:center;">Connecting to Global Network...</div>';
-         
-         // Simulate network delay
-         setTimeout(() => {
-             container.innerHTML = '';
-             
-             // Real User Name from SDK or Fallback
-             let playerName = "You";
-             if (window.CrazyGames && window.CrazyGames.SDK) {
-                 // In a real implementation, you'd fetch the user's name here
-                 // playerName = await window.CrazyGames.SDK.user.getUser(); 
-             }
-
-             // Generate realistic "Top Players" (No botted names)
-             const mockData = [
-                 { rank: 1, name: "CyberKing99", score: 5000000 },
-                 { rank: 2, name: "RoboMaster", score: 2500000 },
-                 { rank: 3, name: "ClickElite", score: 1000000 },
-                 { rank: 4, name: "TechNinja", score: 750000 },
-                 { rank: 5, name: "GearHead", score: 500000 },
-                 { rank: 6, name: "CircuitBreaker", score: 250000 },
-                 { rank: 7, name: "NeonPulse", score: 100000 },
-                 { rank: 999, name: playerName, score: this.gameState.totalBotsDeployed }
-             ];
-             
-             // Sort to ensure player is placed correctly if high score
-             mockData.sort((a, b) => b.score - a.score);
-             
-             // Re-assign ranks based on sort
-             mockData.forEach((p, i) => p.rank = i + 1);
-
-             mockData.forEach(p => {
-                 const row = document.createElement('div');
-                 
-                 // Special styling for Top 3
-                 let rankClass = 'rank-other';
-                 let trophyIcon = '';
-                 
-                 if (p.rank === 1) { rankClass = 'rank-1-gold'; trophyIcon = '🥇'; }
-                 else if (p.rank === 2) { rankClass = 'rank-2-silver'; trophyIcon = '🥈'; }
-                 else if (p.rank === 3) { rankClass = 'rank-3-bronze'; trophyIcon = '🥉'; }
-                 
-                 row.className = `score-row ${rankClass}`;
-                 
-                 // Highlight the player
-                 if (p.name === playerName) row.classList.add('is-player');
-
-                 row.innerHTML = `
-                    <div class="score-left">
-                        <span class="rank-badge">${trophyIcon || '#' + p.rank}</span>
-                        <span class="player-name">${p.name}</span>
-                    </div>
-                    <span class="score-val">${this.formatNumber(p.score)}</span>
-                 `;
-                 container.appendChild(row);
-             });
-         }, 500);
     }
 
     show5xMultiplier() {
@@ -2721,10 +2755,10 @@ class RoboClicker {
 
                     // Max State Effects
                     if (this.heat >= 90) {
-                        if (this.els.heatSystem) this.els.heatSystem.classList.add('shaking');
+                        if (this.els.heatSystem) this.els.heatSystem.classList.add('energy-surge');
                         if (this.els.heatLightning) this.els.heatLightning.classList.remove('hidden');
                     } else {
-                        if (this.els.heatSystem) this.els.heatSystem.classList.remove('shaking');
+                        if (this.els.heatSystem) this.els.heatSystem.classList.remove('energy-surge');
                         if (this.els.heatLightning) this.els.heatLightning.classList.add('hidden');
                     }
                 }
@@ -2767,6 +2801,35 @@ class RoboClicker {
                 }
             }
 
+            // --- BOT SWARM (AUTO CLICKER) ---
+            if (this.adManager.boosts['auto_clicker'] && this.adManager.boosts['auto_clicker'] > now) {
+                // Simulate clicks (Super Fast!)
+                // Use safe coordinate center if robot exists
+                let rect = this.els.hero ? this.els.hero.getBoundingClientRect() : null;
+                const centerX = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+                const centerY = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+                
+                // Trigger logic (isAuto = true to skip heat/xp for balance, or false for OP?)
+                // User said "click super fast", implying main click power.
+                this.clickHero(null, true); 
+                
+                // Visuals (Manual Trigger since isAuto=true skips them)
+                // 30% chance per tick (approx 3/sec) to avoid lag
+                if (Math.random() < 0.3) {
+                     this.spawnBoltParticle(centerX, centerY);
+                }
+                
+                // Jiggle Robot
+                if (this.els.hero) {
+                    this.els.hero.style.transform = `scale(${0.95 + Math.random() * 0.1})`;
+                }
+                
+                // "AUTO" Text
+                if (Math.random() < 0.1) {
+                    this.spawnDamageNumber("AUTO!", centerX + (Math.random()*60-30), centerY - 60, '#5352ed');
+                }
+            }
+
             // --- TURBO MODE VISUALS ---
             if (this.adManager.boosts['turbo'] && this.adManager.boosts['turbo'] > now) {
                 // Active
@@ -2791,7 +2854,72 @@ class RoboClicker {
             this.updateHUD(); 
             this.updateUpgradeAffordability();
             this.updateBoostsUI(); // New UI Update
+
+            // --- AUTO SPAWN ADS & OFFERS ---
+            // Sliding Ad Banner: Every 10 seconds (Deterministic)
+            if (now - this.lastAdSpawn > 10000) {
+                this.triggerSlidingAd();
+                this.lastAdSpawn = now;
+            }
+
+            // Free Upgrade Bubble: Very Frequent (5% chance per tick if none exist)
+            if (Math.random() < 0.05) {
+                this.spawnRandomFreeUpgrade();
+            }
+
         }, 100);
+    }
+    
+    spawnRandomFreeUpgrade() {
+        if (document.querySelector('.free-upgrade-bubble')) return; // One at a time
+        
+        // Cooldown check to prevent spamming right after one disappears
+        const now = Date.now();
+        if (this.lastFreeUpgradeTime && (now - this.lastFreeUpgradeTime < 5000)) return; // 5s cooldown
+
+        const container = this.els.upgradesContainer;
+        if (!container) return;
+        
+        // --- SMART LOGIC ---
+        // Check if user can afford ANY upgrade
+        let canAffordAny = false;
+        if (container.querySelector('.upgrade-item.can-afford')) {
+            canAffordAny = true;
+        }
+
+        // Base Chance per tick (100ms)
+        // We want it to appear roughly every 10-15 seconds
+        // 10s = 100 ticks. 1/100 = 0.01
+        // If broke: More frequent (every 5-8s) -> 0.02
+        
+        let chance = canAffordAny ? 0.01 : 0.03;
+        
+        if (Math.random() > chance) return;
+        
+        const items = container.querySelectorAll('.upgrade-item');
+        if (items.length === 0) return;
+        
+        // Filter out MAXED items AND 'add_drone' to avoid it spawning there
+        const eligibleItems = Array.from(items).filter(item => {
+            const btn = item.querySelector('.purchase-btn');
+            const key = item.getAttribute('data-key');
+            return btn && !btn.textContent.includes("MAXED") && key !== 'add_drone';
+        });
+
+        if (eligibleItems.length === 0) return;
+        
+        // Pick random eligible item
+        const randomItem = eligibleItems[Math.floor(Math.random() * eligibleItems.length)];
+        const key = randomItem.getAttribute('data-key');
+        
+        if (key && this.gameState.upgrades[key]) {
+            // Find the button inside to attach bubble to
+            const btn = randomItem.querySelector('.purchase-btn');
+            if (btn) {
+                this.showSmartAdOffer(btn, key);
+                this.lastFreeUpgradeTime = now;
+            }
+        }
     }
 
     updateBoostsUI() {
@@ -2810,7 +2938,7 @@ class RoboClicker {
                 let icon = '⚡';
                 if (type === 'turbo') { label = 'TURBO'; icon = '🔥'; }
                 if (type === 'auto') { label = 'OVERCLOCK'; icon = '⚙️'; }
-                if (type === 'lucky') { label = 'LUCKY'; icon = '🍀'; }
+                if (type === 'auto_clicker') { label = 'AUTO CLICK'; icon = '🤖'; }
                 
                 let pill = document.getElementById(`boost-pill-${type}`);
                 if (!pill) {
@@ -2878,6 +3006,14 @@ class RoboClicker {
                         }
                     }
                     
+                    // Cleanup removed upgrades (Strict Mode)
+                    const allowedKeys = Object.keys(defaultUpgrades);
+                    for (const key in this.gameState.upgrades) {
+                        if (!allowedKeys.includes(key)) {
+                            delete this.gameState.upgrades[key];
+                        }
+                    }
+                    
                     // Migration: crit_chance -> crit_money
                     if (data.upgrades && data.upgrades['crit_chance']) {
                         this.gameState.upgrades['crit_money'].level = data.upgrades['crit_chance'].level;
@@ -2886,7 +3022,7 @@ class RoboClicker {
 
                 // 2. Evolution Recovery
                 if (!this.gameState.evolution) {
-                    this.gameState.evolution = { stage: 0, xp: 0, maxXp: 25 };
+                    this.gameState.evolution = { stage: 0, xp: 0, maxXp: 150 };
                 }
                 if (!this.gameState.unlockedRobots || !Array.isArray(this.gameState.unlockedRobots)) {
                     this.gameState.unlockedRobots = [0];
