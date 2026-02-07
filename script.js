@@ -250,16 +250,14 @@ class RoboClicker {
         // Signal Gameplay Start to SDK
         if (window.CrazyManager) {
             window.CrazyManager.gameplayStart();
-        }
-
-        // --- Remove Loading Screen (Animated Pop-Out) ---
-        const loadingScreen = document.getElementById('loading-screen');
-        if (loadingScreen) {
-            // Add pop-out animation class
-            loadingScreen.style.animation = 'popOut 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
-            setTimeout(() => {
-                loadingScreen.remove();
-            }, 400); 
+            
+            // --- NEW: Request Banners ---
+            // Request responsive banners for both slots
+            window.CrazyManager.requestResponsiveBanner('banner-container-top');
+            window.CrazyManager.requestResponsiveBanner('banner-container-bottom');
+            
+            // Signal Loading Stop Immediately (No Loading Screen)
+            window.CrazyManager.loadingStop();
         }
     }
     
@@ -2808,6 +2806,8 @@ class RoboClicker {
         if (evoClaimBtn) {
             evoClaimBtn.addEventListener('click', () => {
                 this.toggleModal('evolution-modal', false);
+                // Happy Time! (Evolution Complete)
+                if (window.CrazyManager) window.CrazyManager.happytime();
             });
         }
 
@@ -2841,12 +2841,19 @@ class RoboClicker {
             document.getElementById('settings-modal').classList.add('hidden');
         });
 
-        this.els.confirmYesBtn.addEventListener('click', () => {
+        this.els.confirmYesBtn.addEventListener('click', async () => {
             // FULL NUCLEAR RESET
             this.isHardReset = true; // Prevent auto-save from overriding
-            localStorage.clear();
-            sessionStorage.clear();
-            location.reload();
+            
+            // Use SDK Manager for unified reset
+            if (window.CrazyManager) {
+                await window.CrazyManager.resetProgress('roboClickerElite');
+            } else {
+                // Fallback if Manager missing (shouldn't happen)
+                localStorage.clear();
+                sessionStorage.clear();
+                location.reload();
+            }
         });
 
         this.els.confirmNoBtn.addEventListener('click', () => {
@@ -3013,10 +3020,7 @@ class RoboClicker {
                     this.els.hero.style.transform = `scale(${0.95 + Math.random() * 0.1})`;
                 }
                 
-                // "AUTO" Text
-                if (Math.random() < 0.1) {
-                    this.spawnDamageNumber("AUTO!", centerX + (Math.random()*60-30), centerY - 60, '#5352ed');
-                }
+                // "AUTO" Text removed per user request (relying on Overlay)
             } else {
                 // Hide Overlay
                 if (this.els.botswarmOverlay) {
