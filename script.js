@@ -199,6 +199,9 @@ class RoboClicker {
         if (window.CrazyManager) {
             await window.CrazyManager.init();
             
+            // Force a small delay to ensure SDK Init event is logged first
+            await new Promise(resolve => setTimeout(resolve, 500));
+
             // Ad Block Check
             const hasAdblock = await window.CrazyManager.hasAdblock();
             if (hasAdblock) {
@@ -630,8 +633,9 @@ class RoboClicker {
         const isMega = droneEl.classList.contains('tier-mega');
         if (isMega) {
             laser.style.background = '#00ffff';
-            laser.style.boxShadow = '0 0 10px #00ffff';
-            laser.style.height = '4px'; // Thicker
+            laser.style.boxShadow = '0 0 15px #00ffff';
+            laser.style.height = '8px'; // Thicker (2x normal)
+            laser.style.zIndex = '10';
         }
         
         droneEl.appendChild(laser);
@@ -652,10 +656,9 @@ class RoboClicker {
             // Damage scales: Exactly 200% of User Click Power per shot (2x Boost)
             let baseDamage = Math.max(10, this.getClickPower() * this.getGlobalMultiplier() * 2);
             
-            // MEGA DRONE: Massive Damage Bonus (50x) - Persists through Rebirth
-            if (isMega) {
-                baseDamage *= 50;
-            }
+            // MEGA DRONE: Standard Damage (same as normal drones as per request)
+            // if (isMega) { baseDamage *= 50; } // REMOVED
+
             
             // --- NEW: DRONE CRITICAL HITS ---
             const critUpgrade = this.gameState.upgrades['crit_money'] || { level: 0, basePower: 0 }; 
@@ -686,55 +689,8 @@ class RoboClicker {
         return 1; // Disabled drone multiplier boost as per user request
     }
 
-    triggerSlidingAd() {
-        // --- NEW LOGIC: NOTIFICATION ONLY ---
-        // Instead of spawning a banner, we highlight a card in the drawer and notify the user.
-        
-        // Pick random variant
-        const variants = ['turbo', 'auto', 'auto_clicker'];
-        const type = variants[Math.floor(Math.random() * variants.length)];
-        
-        // Map type to Card ID
-        let cardId = '';
-        if (type === 'turbo') cardId = 'card-turbo';
-        else if (type === 'auto') cardId = 'card-auto';
-        else if (type === 'auto_clicker') cardId = 'card-swarm';
-        
-        const card = document.getElementById(cardId);
-        if (card) {
-            // Remove highlight from others first? No, let them stack or clear all?
-            // Let's clear all first to be neat.
-            ['card-turbo', 'card-auto', 'card-swarm'].forEach(id => {
-                const c = document.getElementById(id);
-                if (c) c.classList.remove('card-highlight');
-            });
-            
-            // Add highlight
-            card.classList.add('card-highlight');
-            
-            // Auto-remove highlight after 15s? Or keep until clicked?
-            // Keep until drawer opened?
-            // Let's remove it after 20s so it doesn't stay forever if ignored.
-            setTimeout(() => {
-                if (card) card.classList.remove('card-highlight');
-            }, 20000);
-        }
-        
-        // Trigger Notification on Drawer Button
-        const bonusBadge = document.getElementById('bonus-badge');
-        if (bonusBadge) {
-            bonusBadge.classList.remove('hidden');
-            bonusBadge.classList.add('active-pulse');
-        }
-        
-        const handle = document.getElementById('bonus-btn');
-        if (handle) {
-            handle.classList.add('attention-shake');
-            setTimeout(() => handle.classList.remove('attention-shake'), 1000);
-        }
-        
-        this.playNotificationSound();
-    }
+    // triggerSlidingAd removed as per user request
+
 
     // --- GAMEPLAY LOGIC ---
 
@@ -1001,6 +957,10 @@ class RoboClicker {
             this.gameState.money -= cost;
             upgrade.level++;
             
+            // Track purchases for Smart Offer logic
+            if (!this.upgradePurchaseCounts) this.upgradePurchaseCounts = {};
+            this.upgradePurchaseCounts[key] = (this.upgradePurchaseCounts[key] || 0) + 1;
+            
             // Special Logic for Add Drone
             if (key === 'add_drone') {
                 this.addDrone(this.gameState.droneLevel || 1);
@@ -1020,8 +980,28 @@ class RoboClicker {
             }
             
             // Show "Little UI" Popup
+            let targetEl = null;
             if (event && (event.target || event.currentTarget)) {
-                this.spawnMiniUpgradePopup(event.currentTarget || event.target);
+                targetEl = event.currentTarget || event.target;
+                this.spawnMiniUpgradePopup(targetEl);
+            }
+
+            // Check if user ran out of money for the NEXT level
+            // And has bought at least 2 times in this session
+            const nextCost = this.getUpgradeCost(key);
+            if (this.gameState.money < nextCost && 
+                this.upgradePurchaseCounts[key] >= 2 && 
+                key !== 'add_drone') {
+                
+                // Trigger Smart Offer immediately
+                // Ensure we target the button for positioning
+                let btn = targetEl;
+                if (btn && btn.classList.contains('upgrade-item')) {
+                    btn = btn.querySelector('.purchase-btn');
+                }
+                if (btn) {
+                    this.showSmartAdOffer(btn, key);
+                }
             }
 
             this.updateDisplay();
@@ -1030,17 +1010,8 @@ class RoboClicker {
             this.saveGame();
             this.playClickSound(); // UI Click
         } else {
-            // --- SMART AD UPGRADE SYSTEM ---
-            // ALWAYS offer if can't afford (Aggressive as requested)
-            // "Adds should slide in very often there should always be a slid in add"
-            if (event && (event.target || event.currentTarget)) {
-                 // Remove any existing first to prevent stack
-                 const existing = document.querySelectorAll('.free-upgrade-bubble');
-                 existing.forEach(e => e.remove());
-                 
-                 this.showSmartAdOffer(event.currentTarget || event.target, key);
-            }
-            this.playNotificationSound(); // Error/Deny sound (reused)
+            // Can't afford
+            this.playNotificationSound(); // Error/Deny sound
         }
     }
     
@@ -1390,26 +1361,9 @@ class RoboClicker {
         // 1. Close Modal
         this.toggleModal('rebirth-modal', false);
 
-        // 2. Trigger Midgame Ad (Interstitial) via CrazyManager
-        if (window.CrazyManager) {
-            window.CrazyManager.showMidgameAd({
-                adStarted: () => {
-                    this.stopGameplay();
-                },
-                adFinished: () => {
-                    this.resumeGameplay();
-                    this.triggerRebirthSequence();
-                },
-                adError: (error) => {
-                    this.resumeGameplay();
-                    this.triggerRebirthSequence();
-                }
-            });
-        } else {
-            // Dev Mode
-            console.log("Dev: Rebirth Ad Skipped");
-            this.triggerRebirthSequence();
-        }
+        // 2. Trigger Rebirth Sequence (Ad Removed)
+        console.log("Rebirth Ad Skipped (User Request)");
+        this.triggerRebirthSequence();
     }
 
     triggerRebirthSequence() {
@@ -1572,13 +1526,9 @@ class RoboClicker {
         this.checkNotifications();
         this.updateUpgradeAffordability();
         
-        const rebirthCost = this.getRebirthCost();
-        const canRebirth = this.gameState.money >= rebirthCost;
-        
         // PRESTIGE BUTTON UPDATE
         if (this.els.rebirthBtn) {
              const cost = this.getRebirthCost();
-             const canAfford = this.gameState.money >= cost;
              
              // Removed icon as per request
              this.els.rebirthBtn.innerHTML = `REBIRTH <span class="rebirth-cost">$${this.formatNumber(cost)}</span>`;
@@ -1586,13 +1536,8 @@ class RoboClicker {
              // Always show Rebirth button as per user request
              this.els.rebirthBtn.style.display = 'block';
              
-             if (canAfford) {
-                 this.els.rebirthBtn.classList.add('rebirth-glow');
-                 this.els.rebirthBtn.style.filter = ''; // Remove inline filter
-             } else {
-                 this.els.rebirthBtn.classList.remove('rebirth-glow');
-                 this.els.rebirthBtn.style.filter = ''; // Let CSS handle it
-             }
+             // Glow handled in updateHUD()
+             this.els.rebirthBtn.style.filter = '';
         }
 
         // Update Heat Meter (Energy Core)
@@ -1708,6 +1653,16 @@ class RoboClicker {
         if (this.els.multiplierStat) {
              const mult = this.getGlobalMultiplier();
              this.els.multiplierStat.textContent = `${this.formatNumber(mult)}x`;
+        }
+
+        // Update Rebirth Button Glow
+        if (this.els.rebirthBtn) {
+            const cost = this.getRebirthCost();
+            if (this.gameState.money >= cost) {
+                this.els.rebirthBtn.classList.add('rebirth-glow');
+            } else {
+                this.els.rebirthBtn.classList.remove('rebirth-glow');
+            }
         }
 
         // this.els.totalBots.textContent = this.formatNumber(this.gameState.totalBotsDeployed);
@@ -2245,37 +2200,18 @@ class RoboClicker {
         const now = Date.now();
         if (this.adManager.cooldowns && this.adManager.cooldowns[type]) {
             if (now < this.adManager.cooldowns[type]) {
-                alert("Ad is on cooldown!");
+                // If it's a button click, the UI should be disabled, but for safety:
+                // console.log("Reward is on cooldown!");
                 return;
             }
         }
 
         this.adManager.requestedType = type;
-        console.log(`[AdManager] Requesting ad for: ${type}`);
+        console.log(`[AdManager] Granting reward for: ${type} (No Ad)`);
         
-        // Use CrazySDKManager
-        if (window.CrazyManager) {
-            window.CrazyManager.showRewardedAd({
-                adStarted: () => {
-                    this.stopGameplay(); // Game-specific pause logic (audio)
-                },
-                adFinished: () => {
-                    this.grantReward(type);
-                    this.resumeGameplay();
-                    if (callbacks.onFinish) callbacks.onFinish();
-                },
-                adError: (error) => {
-                    this.resumeGameplay();
-                    alert("Ad failed to load. Please try again later.");
-                    if (callbacks.onError) callbacks.onError(error);
-                }
-            });
-        } else {
-            // Dev Fallback
-            console.log("Dev Mode: Ad Watched (No SDK)");
-            this.grantReward(type);
-            if (callbacks.onFinish) callbacks.onFinish();
-        }
+        // Direct Grant (No Ad System)
+        this.grantReward(type);
+        if (callbacks.onFinish) callbacks.onFinish();
     }
 
     // Alias for HTML onclicks
@@ -2338,7 +2274,7 @@ class RoboClicker {
         const now = Date.now();
         
         // Start Cooldown for button-based ads
-        if (type === 'turbo' || type === 'auto' || type === 'lucky') {
+        if (type === 'turbo' || type === 'auto' || type === 'lucky' || type === 'auto_clicker') {
             this.startAdCooldown(type);
         }
 
@@ -2466,7 +2402,7 @@ class RoboClicker {
             const baseDmg = Math.max(10, clickPower * 2);
             
             const regularIncome = regularCount * shotsPerSec * baseDmg;
-            const megaIncome = megaCount * shotsPerSec * (baseDmg * 50); // 50x for Mega
+            const megaIncome = megaCount * (shotsPerSec * 2) * baseDmg; // 2x Fire Rate, Normal Damage
             
             const droneIncomePerSec = regularIncome + megaIncome;
 
@@ -2978,17 +2914,34 @@ class RoboClicker {
             // --- FLYING DRONE LASERS (SWARM AI) ---
             const droneContainer = document.getElementById('flying-drones-container');
             if (droneContainer && droneContainer.children.length > 0) {
-                // Fire Rate scales with Drone Level
-                // Base: 10% chance per tick + (Level * 2%)
-                const lvl = this.gameState.droneLevel || 1;
-                const fireChance = 0.1 + (lvl * 0.02);
-                const cappedChance = Math.min(0.6, fireChance); // Cap at 60% per tick (6 shots/sec avg)
+                const allDrones = Array.from(droneContainer.children);
+                const megaDrones = allDrones.filter(d => d.classList.contains('tier-mega'));
+                const normalDrones = allDrones.filter(d => !d.classList.contains('tier-mega'));
 
-                if (Math.random() < cappedChance) {
-                     const drones = droneContainer.children;
-                     const randomDrone = drones[Math.floor(Math.random() * drones.length)];
-                     this.fireDroneLaser(randomDrone);
+                // 1. Normal Drones (Random Swarm Logic)
+                if (normalDrones.length > 0) {
+                    // Fire Rate scales with Drone Level
+                    // Base: 10% chance per tick + (Level * 2%)
+                    const lvl = this.gameState.droneLevel || 1;
+                    const fireChance = 0.1 + (lvl * 0.02);
+                    const cappedChance = Math.min(0.6, fireChance); // Cap at 60% per tick
+
+                    if (Math.random() < cappedChance) {
+                         const randomDrone = normalDrones[Math.floor(Math.random() * normalDrones.length)];
+                         this.fireDroneLaser(randomDrone);
+                    }
                 }
+
+                // 2. Mega Drones (Regular High Speed Fire)
+                // Fire every 4 ticks (400ms) -> 2.5 shots/sec (Regular & Fast)
+                megaDrones.forEach(mega => {
+                    if (!mega.fireTick) mega.fireTick = 0;
+                    mega.fireTick++;
+                    if (mega.fireTick >= 4) {
+                        this.fireDroneLaser(mega);
+                        mega.fireTick = 0;
+                    }
+                });
             }
 
             // --- BOT SWARM (AUTO CLICKER) ---
@@ -3055,12 +3008,8 @@ class RoboClicker {
             this.updateBoostsUI(); // New UI Update
 
             // --- AUTO SPAWN ADS & OFFERS ---
-            // Sliding Ad Banner: Every 10 seconds (Deterministic)
-            if (now - this.lastAdSpawn > 10000) {
-                this.triggerSlidingAd();
-                this.lastAdSpawn = now;
-            }
-
+            // Sliding Ad Banner removed
+            
             // Free Upgrade Bubble: Very Frequent (5% chance per tick if none exist)
             if (Math.random() < 0.05) {
                 this.spawnRandomFreeUpgrade();

@@ -1401,12 +1401,19 @@ body {
 }
 
 /* GLOW STATE (When Affordable) */
+@keyframes rebirthPulse {
+    0% { box-shadow: 0 0 25px #e056fd, inset 0 0 10px rgba(255,255,255,0.2); transform: scale(1); }
+    50% { box-shadow: 0 0 40px #ff00ff, inset 0 0 20px rgba(255,255,255,0.5); transform: scale(1.02); }
+    100% { box-shadow: 0 0 25px #e056fd, inset 0 0 10px rgba(255,255,255,0.2); transform: scale(1); }
+}
+
 .rebirth-trigger-btn.rebirth-glow {
     color: white;
     cursor: pointer;
     opacity: 1;
     box-shadow: 0 0 25px #e056fd, inset 0 0 10px rgba(255,255,255,0.2); /* Glowing Outline */
     border-top-color: #fff;
+    animation: rebirthPulse 2s infinite;
 }
 
 .rebirth-trigger-btn.rebirth-glow::before {
@@ -3983,6 +3990,251 @@ body {
         /* Ensure upgrade list scrolls within the fixed height */
         flex: 1;
         overflow-y: auto;
+    }
+}
+
+/* iPhone/Mobile Landscape Fixes - Shrink UI to fit limited height */
+@media screen and (max-height: 480px) and (orientation: landscape) {
+    :root {
+        --border-width: 2px;
+        --shadow-offset: 3px;
+    }
+
+    /* Loading Screen */
+    .loading-logo {
+        width: 280px;
+        max-width: 80vw;
+    }
+
+    /* HUD */
+    .top-hud {
+        padding: 4px 15px;
+        border-radius: 30px;
+        box-shadow: 3px 3px 0 var(--dark);
+    }
+
+    .currency-container {
+        font-size: 1.2rem;
+        padding: 3px 15px 3px 5px;
+        border-width: 2px;
+    }
+
+    .currency-icon-wrapper {
+        width: 30px;
+        height: 30px;
+        font-size: 1rem;
+        border-width: 2px;
+    }
+
+    .stat-pill {
+        padding: 3px 10px;
+        font-size: 0.75rem;
+        border-width: 2px;
+        gap: 5px;
+    }
+
+    .multiplier-pill {
+        font-size: 0.9rem;
+        padding: 4px 12px;
+    }
+
+    .icon-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        box-shadow: 3px 3px 0 var(--dark);
+    }
+
+    .notification-badge {
+        width: 18px;
+        height: 18px;
+        font-size: 0.6rem;
+        border-width: 2px;
+    }
+
+    /* Main Stage Layout */
+    .main-stage {
+        grid-template-columns: 1fr 300px;
+        gap: 10px;
+    }
+
+    .hero-section {
+        gap: 5px;
+    }
+
+    /* Robot Scaling */
+    .hero-robot {
+        transform: scale(0.65);
+        margin-top: -20px;
+    }
+
+    .click-pad {
+        flex: 1.5;
+    }
+
+    /* Evolution / Fusion Bar */
+    .fusion-container {
+        max-width: 400px;
+        padding: 5px 10px;
+        margin-bottom: 5px;
+    }
+
+    .fusion-label {
+        font-size: 0.75rem;
+    }
+
+    .fusion-track {
+        height: 25px;
+    }
+
+    .fusion-shimmer {
+        font-size: 0.7rem;
+    }
+
+    /* Side Panel (Upgrades/Tasks) */
+    .side-panel {
+        box-shadow: 3px 3px 0 var(--dark);
+    }
+
+    .panel-header {
+        padding: 8px;
+    }
+
+    .panel-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .panel-tab {
+        font-size: 0.85rem;
+        padding: 8px;
+    }
+
+    .upgrade-item {
+        grid-template-columns: 45px 1fr 75px;
+        gap: 8px;
+        min-height: 60px;
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+
+    .upgrade-icon-box {
+        width: 45px;
+        height: 45px;
+        font-size: 1.2rem;
+        border-radius: 10px;
+    }
+
+    .upgrade-name {
+        font-size: 0.9rem;
+    }
+
+    .upgrade-desc {
+        font-size: 0.75rem;
+    }
+
+    .purchase-btn {
+        height: 35px;
+        font-size: 0.8rem;
+        border-radius: 8px;
+    }
+
+    .rebirth-trigger-btn {
+        height: 50px;
+        font-size: 1.1rem;
+    }
+
+    /* Drawers */
+    .bonus-drawer {
+        width: 280px;
+        padding: 15px;
+        border-radius: 0 20px 20px 0;
+    }
+
+    .drawer-handle {
+        width: 45px;
+        height: 60px;
+        right: -45px;
+        border-radius: 0 12px 12px 0;
+    }
+
+    .drawer-title-text {
+        font-size: 1.2rem;
+    }
+
+    .bonus-card {
+        grid-template-columns: 50px 1fr;
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .bonus-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+    }
+
+    .bonus-title {
+        font-size: 1rem;
+    }
+
+    .bonus-desc {
+        font-size: 0.75rem;
+    }
+
+    .bonus-btn {
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+
+    /* Modals */
+    .game-modal {
+        padding: 15px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .rebirth-body-landscape {
+        padding: 10px;
+        gap: 15px;
+    }
+
+    .rebirth-visual-section {
+        padding: 20px;
+    }
+
+    .rebirth-icon-large {
+        font-size: 4rem;
+    }
+
+    .rebirth-content-section {
+        gap: 10px;
+    }
+
+    .rebirth-comparison-box {
+        padding: 10px;
+    }
+
+    .r-label {
+        font-size: 0.7rem;
+    }
+
+    .r-value {
+        font-size: 1.4rem;
+    }
+
+    .info-pill {
+        padding: 4px 10px;
+        font-size: 0.7rem;
+    }
+
+    .rebirth-btn-action {
+        padding: 10px;
+        font-size: 1rem;
     }
 }
 
