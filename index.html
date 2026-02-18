@@ -395,16 +395,16 @@
             </div>
 
             <div class="hud-controls">
+                <button id="daily-reward-btn" class="icon-btn" title="Daily Rewards" style="border-color: #9b59b6; color: #9b59b6; position: relative;">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <div id="daily-badge" class="notification-badge hidden">!</div>
+                </button>
                 <button id="boss-btn" class="icon-btn" title="Boss Battle" style="border-color: #ff4757; color: #ff4757;">
                     <i class="fa-solid fa-skull"></i>
                 </button>
                 <button id="index-btn" class="icon-btn" title="Robot Index">
                     <i class="fa-solid fa-book-open"></i>
                     <div id="index-badge" class="notification-badge hidden">!</div>
-                </button>
-                <button id="daily-reward-btn" class="icon-btn" title="Daily Rewards">
-                    <i class="fa-solid fa-calendar-check"></i>
-                    <div id="daily-badge" class="notification-badge hidden">!</div>
                 </button>
                 <button id="settings-btn" class="icon-btn" title="Settings">
                     <i class="fa-solid fa-gear"></i>
@@ -526,9 +526,9 @@
                 </button>
             </div>
         </div>
-    </div>
+        </div>
 
-    <!-- Bonus Drawer (Left Sidebar) -->
+        <!-- Bonus Drawer (Left Sidebar) -->
     <div id="bonus-drawer" class="bonus-drawer">
         <div id="bonus-btn" class="drawer-handle">
             <div id="bonus-badge" class="notification-badge hidden">!</div>
@@ -542,40 +542,40 @@
         <div class="bonus-list">
             <div id="card-turbo" class="bonus-card">
                 <div class="best-value-badge">HOT!</div>
-                <div class="bonus-icon turbo-icon"><i class="fa-solid fa-fire-flame-curved"></i></div>
+                <div class="bonus-icon pwr-turbo-icon"><i class="fa-solid fa-fire-flame-curved"></i></div>
                 <div class="bonus-info">
                     <div class="bonus-title">Turbo Surge</div>
                     <div class="bonus-desc">3x Income (60s)</div>
                 </div>
                 <div class="bonus-action">
                     <button class="bonus-btn" data-ad-type="turbo" onclick="game.watchAd('turbo')">
-                        <span><i class="fa-solid fa-bolt"></i> CLAIM</span>
+                        <span><i class="fa-solid fa-fire-flame-curved"></i> CLAIM</span>
                     </button>
                 </div>
             </div>
 
             <div id="card-auto" class="bonus-card">
-                <div class="bonus-icon auto-icon"><i class="fa-solid fa-gears"></i></div>
+                <div class="bonus-icon pwr-auto-icon"><i class="fa-solid fa-gauge-high"></i></div>
                 <div class="bonus-info">
                     <div class="bonus-title">Overclock</div>
                     <div class="bonus-desc">10x Drone Speed (30s)</div>
                 </div>
                 <div class="bonus-action">
                     <button class="bonus-btn" data-ad-type="auto" onclick="game.watchAd('auto')">
-                        <span><i class="fa-solid fa-bolt"></i> CLAIM</span>
+                        <span><i class="fa-solid fa-gauge-high"></i> CLAIM</span>
                     </button>
                 </div>
             </div>
 
             <div id="card-swarm" class="bonus-card">
-                <div class="bonus-icon lucky-icon"><i class="fa-solid fa-robot"></i></div>
+                <div class="bonus-icon pwr-swarm-icon"><i class="fa-solid fa-robot"></i></div>
                 <div class="bonus-info">
                     <div class="bonus-title">Bot Swarm</div>
                     <div class="bonus-desc">Auto Clicks (30s)</div>
                 </div>
                 <div class="bonus-action">
                     <button class="bonus-btn" data-ad-type="auto_clicker" onclick="game.watchAd('auto_clicker')">
-                        <span><i class="fa-solid fa-bolt"></i> CLAIM</span>
+                        <span><i class="fa-solid fa-robot"></i> CLAIM</span>
                     </button>
                 </div>
             </div>
@@ -587,29 +587,26 @@
     <!-- Sliding Ad Banner Removed -->
 
     <!-- Daily Rewards Drawer Removed (Moved to Modal) -->
-
+    
     <!-- Modals -->
     <div id="modal-overlay" class="modal-overlay hidden">
         
-        <!-- Daily Rewards Modal (New Landscape UI) -->
-        <div id="daily-rewards-modal" class="game-modal wide-modal hidden">
+        <!-- Daily Rewards Modal -->
+        <div id="daily-rewards-modal" class="game-modal daily-compact hidden">
             <div class="modal-header">
-                <h2>DAILY REWARDS</h2>
+                <h2 class="drawer-title-daily">DAILY REWARDS</h2>
                 <button class="close-modal-btn" data-target="daily-rewards-modal">×</button>
             </div>
             <div class="modal-body">
-                <div class="daily-status">
-                    <div id="daily-timer" class="hidden" style="font-size: 1.2rem; color: #777; margin-bottom: 10px; font-weight: bold;">Next Reward in: --h --m</div>
+                <div id="daily-streak-grid" class="daily-list-landscape">
+                    <!-- Injected by JS -->
                 </div>
-                <div id="daily-streak-grid" class="daily-scroll-container">
-                    <!-- Injected Items -->
-                </div>
-                <button id="claim-daily-btn" class="action-btn" style="width: 100%; margin-top: 20px;" disabled>
-                    CLAIM REWARD
+                <button id="claim-daily-btn" class="claim-daily-main-btn" disabled style="width:100%; margin-top:15px;">
+                    <i class="fa-solid fa-gift"></i> <span>CLAIM REWARD</span>
                 </button>
             </div>
         </div>
-
+        
         <!-- Rebirth Modal -->
         <div id="rebirth-modal" class="game-modal wide-modal rebirth-theme hidden">
             <div class="modal-header">
@@ -682,7 +679,7 @@
         </div>
 
         
-        <!-- Confirm Reset -->
+    <!-- Confirm Reset -->
         <div id="confirm-modal" class="game-modal hidden">
              <div class="modal-header">
                 <h2>ARE YOU SURE?</h2>
@@ -739,7 +736,7 @@
                     </div>
                     
                     <button id="evo-claim-btn" class="evo-claim-btn-landscape">
-                        AWESOME!
+                        <i class="fa-solid fa-check-double"></i> AWESOME!
                     </button>
                 </div>
             </div>
@@ -770,7 +767,25 @@
                 </button>
             </div>
         </div>
+    </div>
 
+    <!-- Playtime Rewards Drawer -->
+    <div id="playtime-rewards-modal" class="playtime-drawer">
+        <!-- Handle (Slide out button) -->
+        <div id="playtime-reward-btn" class="playtime-drawer-handle">
+            <div id="playtime-badge" class="reward-badge hidden">0</div>
+            <i class="fa-solid fa-gift"></i>
+        </div>
+
+        <div class="drawer-header">
+            <h2 class="drawer-title-text">PLAYTIME REWARDS</h2>
+            <button id="close-playtime-btn" class="close-modal-btn">×</button>
+        </div>
+        <div class="drawer-body">
+            <div id="playtime-rewards-grid" class="playtime-list">
+                <!-- Injected by JS -->
+            </div>
+        </div>
     </div>
 
     <!-- Daily Reward Button Moved to HUD -->
@@ -787,62 +802,80 @@
                     <span class="boss-stat-label">BOT LEVEL</span>
                     <span id="boss-level">1</span>
                 </div>
+                <div class="boss-damage-header">
+                    <div class="boss-damage-item">
+                        <i class="fa-solid fa-hand-fist"></i> Damage: <span id="boss-click-damage">1</span>
+                    </div>
+                    <div class="boss-damage-item rec-damage">
+                        <i class="fa-solid fa-bullseye"></i> Recommended: <span id="boss-rec-damage">1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="boss-main-area">
+            <button id="close-boss-btn" class="close-modal-btn boss-close-center">×</button>
+            <div id="boss-container" class="boss-container">
+                <!-- Boss HP Bar moved here to be over the boss -->
                 <div class="boss-hp-container">
                     <div class="boss-hp-bar">
                         <div id="boss-hp-fill" class="boss-hp-fill"></div>
                     </div>
                     <div class="boss-hp-text"><span id="boss-hp-current">100</span> / <span id="boss-hp-max">100</span> HP</div>
                 </div>
-            </div>
-            <button id="close-boss-btn" class="close-modal-btn">&times;</button>
-        </div>
 
-        <div class="boss-main-area">
-            <div class="boss-damage-stat">
-                <i class="fa-solid fa-hand-fist"></i> Damage: <span id="boss-click-damage">1</span>
-            </div>
-
-            <div id="boss-container" class="boss-container">
-                <div id="boss-lock-timer" class="hidden">LOCKED: 2:00</div>
                 <div id="boss-robot" class="boss-robot">
                     <div class="boss-glow"></div>
-                    <div class="boss-head">
+                    <div class="boss-head critical-section" data-mult="1.1">
                         <div class="boss-eyes">
-                            <div class="boss-eye left"></div>
-                            <div class="boss-eye right"></div>
+                            <div class="boss-eye left critical-section" data-mult="1.2"></div>
+                            <div class="boss-eye right critical-section" data-mult="1.2"></div>
                         </div>
                     </div>
                     <div class="boss-body">
-                        <div class="boss-core"></div>
+                        <div class="boss-core critical-section" data-mult="1.5"></div>
                     </div>
                     <div class="boss-arms">
-                        <div class="boss-arm left"></div>
-                        <div class="boss-arm right"></div>
+                        <div class="boss-arm left critical-section" data-mult="1.05"></div>
+                        <div class="boss-arm right critical-section" data-mult="1.05"></div>
                     </div>
                 </div>
+                <div id="critical-targets"></div>
                 <div id="laser-container"></div>
             </div>
 
             <div class="boss-upgrades-panel">
                 <h3 class="upgrades-title">BOSS UPGRADES</h3>
                 <div class="boss-upgrade-list">
+                    <!-- Damage -->
                     <div class="boss-upgrade-card" id="upgrade-boss-damage">
                         <div class="upgrade-icon damage-icon"><i class="fa-solid fa-bolt"></i></div>
                         <div class="upgrade-info">
                             <div class="upgrade-name">Increase Damage</div>
                             <div class="upgrade-desc">Increases Click damage.</div>
-                            <div class="upgrade-cost">Money: <span id="boss-damage-cost">$5,000</span></div>
+                            <div class="upgrade-cost">Money: <span id="boss-damage-cost">$1,000</span></div>
                         </div>
                         <button class="boss-buy-btn" onclick="game.buyBossUpgrade('damage')">BUY</button>
                     </div>
+                    <!-- Auto Shoot -->
                     <div class="boss-upgrade-card" id="upgrade-boss-auto">
-                        <div class="upgrade-icon auto-icon"><i class="fa-solid fa-robot"></i></div>
+                        <div class="upgrade-icon auto-icon"><i class="fa-solid fa-gun"></i></div>
                         <div class="upgrade-info">
                             <div class="upgrade-name">Auto shoot</div>
                             <div class="upgrade-desc">Auto shoots lasers at boss.</div>
-                            <div class="upgrade-cost">Money: <span id="boss-auto-cost">$25,000</span></div>
+                            <div class="upgrade-cost">Money: <span id="boss-auto-cost">$1,000</span></div>
                         </div>
                         <button class="boss-buy-btn" onclick="game.buyBossUpgrade('auto')">BUY</button>
+                    </div>
+                    <!-- Critical Strike (Moved to bottom) -->
+                    <div class="boss-upgrade-card" id="upgrade-boss-crit">
+                        <div class="upgrade-icon crit-icon"><i class="fa-solid fa-star"></i></div>
+                        <div class="upgrade-info">
+                            <div class="upgrade-name">Critical Strike</div>
+                            <div class="upgrade-desc">Chance for 2x damage.</div>
+                            <div class="upgrade-cost">Money: <span id="boss-crit-cost">$1,000</span></div>
+                        </div>
+                        <button class="boss-buy-btn" onclick="game.buyBossUpgrade('crit')">BUY</button>
                     </div>
                 </div>
             </div>

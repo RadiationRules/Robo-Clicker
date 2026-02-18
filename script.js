@@ -89,11 +89,16 @@ const TASKS_DATA = generateTasks();
 const DRONE_COSTS = [500, 50000, 5000000, 500000000, 50000000000];
 
 const GEM_SHOP_ITEMS = {
+    'perm_energy_2x': { name: "Energy Core", desc: "Energy Bar Fills 2X Faster", cost: 100, type: 'perm_buff', mult: 2, icon: 'fa-charging-station' },
     'perm_auto_2x': { name: "Overclock Chip", desc: "Permanent 2x Drone Speed", cost: 200, type: 'perm_buff', mult: 2, icon: 'fa-microchip' },
     'perm_click_2x': { name: "Titanium Finger", desc: "Permanent 2x Click Value", cost: 300, type: 'perm_buff', mult: 2, icon: 'fa-hand-fist' },
+    'perm_playtime_speed': { name: "Time Warp", desc: "Permanent 2X Playtime Rewards Speed!", cost: 400, type: 'perm_buff', mult: 2, icon: 'fa-clock' },
     'golden_drops': { name: "Golden Drops", desc: "Golden Drops give 2x more money", cost: 500, type: 'perm_buff', mult: 2, icon: 'fa-coins' },
-    'perm_evo_speed': { name: "Evo Accelerator", desc: "Permanent 2x Evolution Speed", cost: 750, type: 'perm_buff', mult: 2, icon: 'fa-dna' },
-    'mega_drone': { name: "MEGA DRONE", desc: "Deploys a Mega Drone!", cost: 1000, type: 'perm_mega_drone', icon: 'fa-jet-fighter-up' }
+    'perm_evo_speed': { name: "Evo Accelerator", desc: "Permanent 2x Evolution Speed", cost: 700, type: 'perm_buff', mult: 2, icon: 'fa-dna' },
+    'chrono_shard': { name: "Chrono Shard", desc: "Increases Power Up duration by 2X", cost: 800, type: 'perm_buff', mult: 2.0, icon: 'fa-hourglass-half' },
+    'quantum_cache': { name: "Quantum Cache", desc: "Permanently boosts Offline Earnings by 2X", cost: 900, type: 'perm_buff', mult: 1.0, icon: 'fa-box-archive' },
+    'critical_boost': { name: "Critical Boost", desc: "Every click is a critical hit!", cost: 1000, type: 'perm_buff', mult: 0.05, icon: 'fa-bullseye' },
+    'mega_drone': { name: "MEGA DRONE", desc: "Deploys a Mega Drone!", cost: 1500, type: 'perm_mega_drone', icon: 'fa-jet-fighter-up' }
 };
 
 const AD_VARIANTS = [
@@ -102,19 +107,36 @@ const AD_VARIANTS = [
     { id: 'auto_clicker', title: 'BOT SWARM', sub: 'Auto Clicks (30s)', icon: '🤖', color: 'linear-gradient(90deg, #5352ed, #70a1ff)' }
 ];
 
+const PLAYTIME_REWARDS = [
+    { id: 'play_1m', time: 60, label: '1 Minute', reward: { gems: 10, multiplier: 0.05 }, icon: 'fa-box-open', color: '#3498db' },
+    { id: 'play_3m', time: 180, label: '3 Minutes', reward: { gems: 25, multiplier: 0.10 }, icon: 'fa-gift', color: '#2ecc71' },
+    { id: 'play_5m', time: 300, label: '5 Minutes', reward: { gems: 50, multiplier: 0.15 }, icon: 'fa-gem', color: '#9b59b6' },
+    { id: 'play_10m', time: 600, label: '10 Minutes', reward: { gems: 100, multiplier: 0.20 }, icon: 'fa-trophy', color: '#f1c40f' },
+    { id: 'play_15m', time: 900, label: '15 Minutes', reward: { gems: 150, multiplier: 0.25 }, icon: 'fa-star', color: '#e67e22' },
+    { id: 'play_20m', time: 1200, label: '20 Minutes', reward: { gems: 200, multiplier: 0.30 }, icon: 'fa-crown', color: '#e74c3c' },
+    { id: 'play_30m', time: 1800, label: '30 Minutes', reward: { gems: 300, multiplier: 0.35 }, icon: 'fa-dragon', color: '#1abc9c' },
+    { id: 'play_40m', time: 2400, label: '40 Minutes', reward: { gems: 400, multiplier: 0.40 }, icon: 'fa-rocket', color: '#34495e' },
+    { id: 'play_50m', time: 3000, label: '50 Minutes', reward: { gems: 500, multiplier: 0.45 }, icon: 'fa-bolt', color: '#f39c12' },
+    { id: 'play_1h', time: 3600, label: '1 Hour', reward: { gems: 1000, multiplier: 0.50 }, icon: 'fa-sun', color: '#d35400' }
+];
+
 class RoboClicker {
     constructor() {
         this.gameState = {
             money: 0,
-            gems: 0, // New Currency
+            gems: 0, 
             totalMoney: 0,
-            totalClicks: 0, // New Stat
+            runMoney: 0, // Money earned this run (resets on rebirth)
+            totalClicks: 0, 
             clickPower: 1,
             autoClickPower: 0,
             rebirthMultiplier: 1,
             rebirthCount: 0,
             totalBotsDeployed: 0, 
             
+            // Playtime Rewards
+            sessionPlaytime: 0,
+            claimedPlaytimeRewards: [],
             // Bot Hangar System
             drones: [], // Array of { tier: 1 } objects
             
@@ -141,6 +163,9 @@ class RoboClicker {
                 claimedPoints: 0, // Track total points claimed to calc next threshold
                 upgrades: {} // { 'id': level }
             },
+
+            // Ad Cooldowns
+            adCooldowns: {},
 
             // Upgrades with descriptions - EXCLUSIVE & FUN
             upgrades: {
@@ -172,9 +197,11 @@ class RoboClicker {
                 hp: 100,
                 maxHp: 100,
                 clickDamage: 1,
+                critChanceLevel: 0,
                 autoShootLevel: 0,
                 damageUpgradeLevel: 0,
-                autoShootInterval: null
+                autoShootInterval: null,
+                criticalTargetTimer: null
             },
             
             lastSave: Date.now(),
@@ -196,6 +223,7 @@ class RoboClicker {
         this.els = {};
         
         this.isHardReset = false; // Flag to prevent save on reset
+        this._adCooldownIntervals = {}; // Store cooldown intervals to clear them
         
         // Tab State
         this.activeTab = 'upgrades';
@@ -254,6 +282,13 @@ class RoboClicker {
         this.checkDailyReward(false); 
         this.applyRobotVisuals();
         
+        // Re-apply any active ad cooldowns to buttons on load
+        for (const type in this.gameState.adCooldowns) {
+            if (this.gameState.adCooldowns[type] > Date.now()) {
+                this.startAdCooldown(type);
+            }
+        }
+
         // Offline Earnings Check
         this.checkOfflineEarnings();
 
@@ -433,26 +468,30 @@ class RoboClicker {
             confirmModal: document.getElementById('confirm-modal'), // New
             
             rebirthBtn: document.getElementById('open-rebirth-btn'),
-            dailyRewardBtn: document.getElementById('daily-reward-btn'), // HUD Button
-            
-            claimOfflineBtn: document.getElementById('claim-offline-btn'), // New
-            
-            bonusDrawer: document.getElementById('bonus-drawer'),
-            drawerToggle: document.getElementById('bonus-btn'), // New Button ID
-            closeBonusBtn: document.getElementById('close-bonus-btn'), // New Close Button
-            
-            // dailyDrawer removed
-            dailyBadge: document.getElementById('daily-badge'), // HUD Badge
-            
+            dailyRewardBtn: document.getElementById('daily-reward-btn'),
+            dailyBadge: document.getElementById('daily-badge'),
+            dailyRewardsModal: document.getElementById('daily-rewards-modal'),
             dailyGrid: document.getElementById('daily-streak-grid'),
             claimDailyBtn: document.getElementById('claim-daily-btn'),
-            dailyTimer: document.getElementById('daily-timer'),
+            closeDailyBtn: document.getElementById('close-daily-btn'),
+            
+            claimOfflineBtn: document.getElementById('claim-offline-btn'),
+            bonusDrawer: document.getElementById('bonus-drawer'),
+            drawerToggle: document.getElementById('bonus-btn'),
+            closeBonusBtn: document.getElementById('close-bonus-btn'),
 
             sfxSlider: document.getElementById('setting-sfx'),
             musicSlider: document.getElementById('setting-music'),
             
             confirmYesBtn: document.getElementById('confirm-yes-btn'),
             confirmNoBtn: document.getElementById('confirm-no-btn'),
+
+            // Playtime UI
+            playtimeRewardBtn: document.getElementById('playtime-reward-btn'),
+            playtimeBadge: document.getElementById('playtime-badge'),
+            playtimeRewardsModal: document.getElementById('playtime-rewards-modal'),
+            playtimeRewardsGrid: document.getElementById('playtime-rewards-grid'),
+            closePlaytimeBtn: document.getElementById('close-playtime-btn'),
 
             // Boss Battle Elements
             bossOverlay: document.getElementById('boss-battle-overlay'),
@@ -463,9 +502,13 @@ class RoboClicker {
             bossHpCurrent: document.getElementById('boss-hp-current'),
             bossHpMax: document.getElementById('boss-hp-max'),
             bossRobot: document.querySelector('.boss-robot'),
+            criticalTargets: document.getElementById('critical-targets'),
             bossClickDamage: document.getElementById('boss-click-damage'),
+            bossRecDamage: document.getElementById('boss-rec-damage'),
             bossDamageCost: document.getElementById('boss-damage-cost'),
+            bossCritCost: document.getElementById('boss-crit-cost'),
             bossAutoCost: document.getElementById('boss-auto-cost'),
+            bossUpgradeBtns: document.querySelectorAll('.boss-buy-btn'),
             laserContainer: document.getElementById('laser-container')
         };
     }
@@ -706,7 +749,7 @@ class RoboClicker {
             this.spawnBoltParticle(robotX, robotY);
             
             // 3. Robot Bounce
-            this.animateHero();
+
             
         }, 100);
     }
@@ -742,18 +785,17 @@ class RoboClicker {
             this.isIdle = false;
             if (this.els.idlePrompt) this.els.idlePrompt.classList.add('hidden');
             
-            // Satisfying Shake on Click
-            this.els.hero.classList.remove('click-shake');
+            // Apply bounce animation
+            this.els.hero.classList.remove('bounce-animation');
             void this.els.hero.offsetWidth; // Force reflow
-            this.els.hero.classList.add('click-shake');
+            this.els.hero.classList.add('bounce-animation');
 
             // Increase Heat - EASIER TO FILL
-            this.heat = Math.min(100, (this.heat || 0) + 8); // Adjusted to be harder (was 12)
-            
-            // Add Shake to Robot
-            this.els.hero.classList.remove('shake');
-            void this.els.hero.offsetWidth; // Force reflow
-            this.els.hero.classList.add('shake');
+            let heatIncrease = 8;
+            if (this.gameState.gemUpgrades && this.gameState.gemUpgrades['perm_energy_2x']) {
+                heatIncrease *= 2;
+            }
+            this.heat = Math.min(100, (this.heat || 0) + heatIncrease);
             
             // Track Total Clicks
             this.gameState.totalClicks = (this.gameState.totalClicks || 0) + 1;
@@ -770,9 +812,15 @@ class RoboClicker {
         }
 
         // Critical Chance Logic
-        const critUpgrade = this.gameState.upgrades['crit_money'] || { level: 0, basePower: 0 }; 
-        const critChance = (critUpgrade.level * critUpgrade.basePower) / 100;
-        let isCrit = Math.random() < critChance;
+        let isCrit = false;
+        // If Critical Boost is owned, every click is critical
+        if (this.gameState.gemUpgrades && this.gameState.gemUpgrades['critical_boost']) {
+            isCrit = true;
+        } else {
+            const critUpgrade = this.gameState.upgrades['crit_money'] || { level: 0, basePower: 0 }; 
+            const critChance = (critUpgrade.level * critUpgrade.basePower) / 100;
+            isCrit = Math.random() < critChance;
+        }
         
         let amount = this.getClickPower(); // Base Click Value
         
@@ -833,7 +881,7 @@ class RoboClicker {
                 this.spawnTutorialSplash(event.clientX, event.clientY);
             }
 
-            this.animateHero();
+
             
             if (isMidas) {
                 this.spawnDamageNumber("MIDAS!", event.clientX, event.clientY - 80, '#FFD700');
@@ -896,6 +944,8 @@ class RoboClicker {
     addMoney(amount) {
         this.gameState.money += amount;
         this.gameState.totalMoney += amount;
+        if (typeof this.gameState.runMoney === 'undefined') this.gameState.runMoney = 0;
+        this.gameState.runMoney += amount;
         
         if (Math.random() < 0.1) this.checkTaskProgress();
     }
@@ -1056,13 +1106,14 @@ class RoboClicker {
             const canAfford = this.gameState.gems >= item.cost;
             
             const div = document.createElement('div');
-            div.className = `upgrade-item ${canAfford && !isOwned ? 'can-afford' : ''}`;
             
-            // If owned, maybe style differently
-            if (isOwned) {
-                div.style.opacity = '0.7';
-                div.style.background = '#e8f7eb';
+            // Custom Classes for Special Items
+            let extraClass = '';
+            if (key === 'mega_drone') {
+                extraClass = 'op-item';
             }
+
+            div.className = `upgrade-item ${canAfford && !isOwned ? 'can-afford' : ''} ${extraClass} ${isOwned ? 'item-owned' : ''}`;
             
             let btnText = `💎 ${item.cost}`;
             if (isOwned) btnText = "OWNED";
@@ -1111,8 +1162,8 @@ class RoboClicker {
             this.updateDisplay();
             this.renderGemShop();
             
-            // Effect
-            alert(`${item.name} Acquired!`);
+            // Modern Visual Feedback
+            this.showFloatingText(`${item.name} UNLOCKED!`, 'gem-reward');
         }
     }
     
@@ -1429,6 +1480,7 @@ class RoboClicker {
         // RESET GAME STATE
         // Reset Money (Keep Gems)
         this.gameState.money = 0;
+        this.gameState.runMoney = 0;
         this.gameState.clickPower = 1;
         this.gameState.autoClickPower = 0;
         
@@ -1444,6 +1496,25 @@ class RoboClicker {
              this.gameState.drones = [];
         }
         this.gameState.droneLevel = 1;
+
+        // Reset Boss Progress
+        if (this.gameState.boss) {
+            this.gameState.boss.level = 1;
+            this.gameState.boss.hp = 100;
+            this.gameState.boss.maxHp = 100;
+            this.gameState.boss.lockedUntil = 0;
+            this.gameState.boss.clickDamage = 1;
+            this.gameState.boss.critChanceLevel = 0;
+            this.gameState.boss.autoShootLevel = 0;
+            this.gameState.boss.damageUpgradeLevel = 0;
+            this.gameState.boss.autoShootInterval = null;
+            this.gameState.boss.criticalTargetTimer = null;
+        }
+
+        // Reset Playtime Rewards
+        this.gameState.sessionPlaytime = 0;
+        this.gameState.claimedPlaytimeRewards = [];
+        this.gameState.lastPlaytimeReset = Date.now();
         
         // Reset Evolution - DISABLED per user request (Persistence)
         // this.gameState.evolution.stage = 0;
@@ -1494,9 +1565,9 @@ class RoboClicker {
         const dailyBtn = document.getElementById('daily-badge');
         if (dailyBtn) {
             const now = Date.now();
-            const oneDay = 24 * 60 * 60 * 1000;
+            const halfDay = 12 * 60 * 60 * 1000;
             const timeSince = now - this.gameState.lastDailyClaim;
-            if (timeSince > oneDay) {
+            if (timeSince > halfDay) {
                 dailyBtn.classList.remove('hidden');
             } else {
                 dailyBtn.classList.add('hidden');
@@ -2175,12 +2246,6 @@ class RoboClicker {
         setTimeout(() => el.remove(), 2000);
     }
 
-    animateHero() {
-        this.els.hero.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            this.els.hero.style.transform = 'scale(1)';
-        }, 50);
-    }
 
     triggerRobotPersonality() {
         // Only if not currently animating (check classes)
@@ -2231,59 +2296,70 @@ class RoboClicker {
 
     // Consolidated boss battle methods moved to end of class.
 
-
-
-
-
-
-
-    spawnLaser(fromLeft) {
-        if (!this.els.laserContainer) return;
-        const laser = document.createElement('div');
-        laser.className = `laser ${fromLeft ? 'laser-left' : 'laser-right'}`;
+    showCustomRewardModal(amount, isGems = false, title = "REWARD RECEIVED!") {
+        const rewardModal = document.createElement('div');
+        rewardModal.className = 'reward-popup-modal';
         
-        // Random vertical position
-        const top = 20 + Math.random() * 60;
-        laser.style.top = `${top}%`;
-        
-        this.els.laserContainer.appendChild(laser);
-        setTimeout(() => laser.remove(), 400);
+        const formattedAmount = isGems ? amount : this.formatNumber(amount);
+        const icon = isGems ? 'fa-gem' : 'fa-sack-dollar';
+        const color = isGems ? '#9b59b6' : '#2ecc71';
+
+        rewardModal.innerHTML = `
+            <div class="reward-popup-content">
+                <div class="reward-popup-header">${title}</div>
+                <div class="reward-popup-icon" style="color: ${color}"><i class="fa-solid ${icon}"></i></div>
+                <div class="reward-popup-amount">${isGems ? '' : '$'}${formattedAmount}</div>
+                <button class="reward-popup-confirm">AWESOME!</button>
+            </div>
+        `;
+        document.body.appendChild(rewardModal);
+
+        const confirmBtn = rewardModal.querySelector('.reward-popup-confirm');
+        confirmBtn.onclick = () => {
+            rewardModal.classList.add('fade-out');
+            setTimeout(() => rewardModal.remove(), 500);
+            this.playClickSound();
+        };
+
+        this.playNotificationSound();
     }
 
-    spawnBossDamagePop(x, y, damage) {
-        const pop = document.createElement('div');
-        pop.className = 'damage-pop';
-        pop.textContent = `-${this.formatNumber(damage)}`;
-        
-        // Random slight offset for more "explosive" feel
-        const jitterX = (Math.random() * 100) - 50;
-        const jitterY = (Math.random() * 40) - 20;
-        
-        pop.style.left = `${x + jitterX}px`;
-        pop.style.top = `${y + jitterY}px`;
-        
-        document.body.appendChild(pop);
-        setTimeout(() => pop.remove(), 800);
+    playNotificationSound() {
+        if (!this.audioCtx || this.gameState.settings.sfxVolume === 0) return;
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, this.audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, this.audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        osc.start();
+        osc.stop(this.audioCtx.currentTime + 0.3);
     }
 
     toggleBonusDrawer() {
+        if (!this.els.bonusDrawer) return;
         this.els.bonusDrawer.classList.toggle('open');
+        
+        // Close other drawers if this one is opening
+        if (this.els.bonusDrawer.classList.contains('open')) {
+            if (this.els.playtimeRewardsModal) this.els.playtimeRewardsModal.classList.remove('open');
+        }
+
         if (!this.gameState.hasOpenedDrawer) {
             this.gameState.hasOpenedDrawer = true;
             this.saveGame();
         }
     }
     
-    toggleDailyDrawer() {
-        // Legacy function, replaced by modal
-        this.toggleModal('daily-rewards-modal', true);
-    }
 
     watchRewardedAd(type, callbacks = {}) {
         // Cooldown Check
         const now = Date.now();
-        if (this.adManager.cooldowns && this.adManager.cooldowns[type]) {
-            if (now < this.adManager.cooldowns[type]) {
+        if (this.gameState.adCooldowns && this.gameState.adCooldowns[type]) {
+            if (now < this.gameState.adCooldowns[type]) {
                 // If it's a button click, the UI should be disabled, but for safety:
                 // console.log("Reward is on cooldown!");
                 return;
@@ -2322,10 +2398,16 @@ class RoboClicker {
     }
 
     startAdCooldown(type) {
-        if (!this.adManager.cooldowns) this.adManager.cooldowns = {};
-        const duration = 180000; // 3 minutes
-        this.adManager.cooldowns[type] = Date.now() + duration;
-        
+        // Clear any existing interval for this type to prevent duplicates
+        if (this._adCooldownIntervals[type]) {
+            clearInterval(this._adCooldownIntervals[type]);
+        }
+
+        let duration = 180000; // 3 minutes (180,000 milliseconds)
+        const cooldownEndTime = Date.now() + duration;
+        this.gameState.adCooldowns[type] = cooldownEndTime; // Store in persistent gameState
+        this.saveGame(); // Save game state immediately
+
         // Find button - Robust Selector (Data Attribute -> Onclick Fallback)
         let btn = document.querySelector(`.bonus-btn[data-ad-type="${type}"]`);
         if (!btn) {
@@ -2337,10 +2419,15 @@ class RoboClicker {
             btn.disabled = true;
             btn.classList.add('cooldown-active');
             
+            // Set up interval to update timer and clear cooldown
             const interval = setInterval(() => {
-                const remaining = this.adManager.cooldowns[type] - Date.now();
+                const remaining = this.gameState.adCooldowns[type] - Date.now();
                 if (remaining <= 0) {
                     clearInterval(interval);
+                    delete this._adCooldownIntervals[type]; // Clean up interval reference
+                    delete this.gameState.adCooldowns[type]; // Remove from persistent state
+                    this.saveGame(); // Save changes
+                    
                     btn.innerHTML = originalText;
                     btn.disabled = false;
                     btn.classList.remove('cooldown-active');
@@ -2350,6 +2437,7 @@ class RoboClicker {
                     btn.textContent = `WAIT ${m}:${s.toString().padStart(2, '0')}`;
                 }
             }, 1000);
+            this._adCooldownIntervals[type] = interval; // Store interval ID
         }
     }
 
@@ -2358,18 +2446,26 @@ class RoboClicker {
         const now = Date.now();
         
         // Start Cooldown for button-based ads
-        if (type === 'turbo' || type === 'auto' || type === 'lucky' || type === 'auto_clicker') {
-            this.startAdCooldown(type);
-        }
+        this.startAdCooldown(type);
 
         if (type === 'turbo') {
             // 1 Minute Boost
-            this.adManager.boosts['turbo'] = now + 60000;
+            let turboDuration = 60000; // 1 Minute Boost
+
+            if (this.gameState.gemUpgrades && this.gameState.gemUpgrades['chrono_shard']) {
+                turboDuration *= GEM_SHOP_ITEMS.chrono_shard.mult; // Apply 2x from Chrono Shard
+            }
+            this.adManager.boosts['turbo'] = now + turboDuration;
             msg = "TURBO SURGE: 3x Income for 1 Minute!";
             // this.toggleBonusDrawer(); // Removed per request
         } else if (type === 'auto') {
             // 30 Seconds Boost
-            this.adManager.boosts['auto'] = now + 30000;
+            let autoDuration = 30000; // 30 Seconds Boost
+
+            if (this.gameState.gemUpgrades && this.gameState.gemUpgrades['chrono_shard']) {
+                autoDuration *= GEM_SHOP_ITEMS.chrono_shard.mult; // Apply 2x from Chrono Shard
+            }
+            this.adManager.boosts['auto'] = now + autoDuration;
             msg = "OVERCLOCK: 10x Speed for 30 Seconds!";
              // this.toggleBonusDrawer(); // Removed per request
         } else if (type === 'lucky') {
@@ -2383,7 +2479,12 @@ class RoboClicker {
             return; // Skip default alert
         } else if (type === 'auto_clicker') {
             // Auto Clicker Ad: 30s of clicks
-            this.adManager.boosts['auto_clicker'] = now + 30000;
+            let autoClickerDuration = 30000; // Auto Clicker Ad: 30s of clicks
+
+            if (this.gameState.gemUpgrades && this.gameState.gemUpgrades['chrono_shard']) {
+                autoClickerDuration *= GEM_SHOP_ITEMS.chrono_shard.mult; // Apply 2x from Chrono Shard
+            }
+            this.adManager.boosts['auto_clicker'] = now + autoClickerDuration;
             msg = "AUTO CLICKER: Bot Swarm Activated!";
             // this.toggleBonusDrawer(); // Removed per request
         } else if (type === 'offline_2x') {
@@ -2419,24 +2520,22 @@ class RoboClicker {
 
     showCustomRewardModal(amount, isGems = false, customTitle = null) {
         // Reuse reward modal structure or create dynamic one
-        // We can use the existing reward-modal logic if we inject content
         const overlay = document.createElement('div');
         overlay.className = 'reward-modal-overlay';
-        const symbol = isGems ? '💎' : (customTitle ? '' : '$');
-        const colorClass = isGems ? 'color: #9b59b6;' : 'color: var(--success);';
         
+        // Determine symbol and color
+        let symbol = isGems ? '💎' : '$';
+        let colorClass = isGems ? 'color: #9b59b6;' : 'color: var(--success);';
         let label = isGems ? 'GEMS' : 'CASH';
-        let title = isGems ? 'TASK COMPLETE!' : 'LUCKY STRIKE!';
+        let title = customTitle || (isGems ? 'TASK COMPLETE!' : 'LUCKY STRIKE!');
         
-        // Handle Custom Title (e.g. Free Upgrades)
-        if (customTitle) {
-            title = "REWARD RECEIVED!";
-            label = customTitle;
-        }
-
+        // Format the value display - ALWAYS show as money/gems unless specifically a level count
         let valueDisplay = `${symbol}${this.formatNumber(amount)}`;
-        if (customTitle && !isGems) {
-             valueDisplay = `+${amount} LEVELS`; // Specific for upgrades
+        
+        // Specific override for the "2x FREE UPGRADES" which might pass a customTitle
+        if (customTitle && customTitle.includes("LEVELS")) {
+             valueDisplay = `+${amount} LEVELS`;
+             label = "UPGRADES";
         }
         
         overlay.innerHTML = `
@@ -2445,7 +2544,9 @@ class RoboClicker {
                 <div style="font-size: 1.2rem; color: #555;">YOU HAVE RECEIVED</div>
                 <div class="reward-value" style="${colorClass}">${valueDisplay}</div>
                 <div style="font-size: 1.2rem; color: #555;">${label}</div>
-                <button class="reward-claim-btn" onclick="this.closest('.reward-modal-overlay').remove()">AWESOME!</button>
+                <button class="reward-claim-btn" onclick="this.closest('.reward-modal-overlay').remove()">
+                    <i class="fa-solid fa-check"></i> AWESOME!
+                </button>
             </div>
         `;
         document.body.appendChild(overlay);
@@ -2509,7 +2610,12 @@ class RoboClicker {
             }
 
             const totalPerSec = droneIncomePerSec * globalMult;
-            const totalOffline = Math.floor(totalPerSec * seconds * 0.5); // 50% efficiency for offline
+            let totalOffline = Math.floor(totalPerSec * seconds * 0.5); // 50% efficiency for offline
+            
+            // Apply Quantum Cache boost if owned
+            if (this.gameState.gemUpgrades && this.gameState.gemUpgrades['quantum_cache']) {
+                totalOffline *= (1 + GEM_SHOP_ITEMS.quantum_cache.mult); // 100% boost means 2x
+            }
             
             if (totalOffline > 0) {
                 this.adManager.pendingOfflineAmount = totalOffline;
@@ -2529,167 +2635,293 @@ class RoboClicker {
     // --- DAILY REWARDS (INFINITE SCROLL) ---
     checkDailyReward(autoOpen = true) {
         const now = Date.now();
-        const oneDay = 24 * 60 * 60 * 1000;
+        const halfDay = 12 * 60 * 60 * 1000;
+        const threeMinutes = 3 * 60 * 1000;
         const timeSince = now - this.gameState.lastDailyClaim;
+        const playtimeSinceStart = now - this.gameState.startTime;
 
-        // Reset if missed a day (allow 48h window)
-        if (timeSince > oneDay * 2) this.gameState.dailyStreak = 0;
+        // Reset streak if more than 24 hours passed
+        if (timeSince > halfDay * 2 && this.gameState.lastDailyClaim !== 0) {
+            this.gameState.dailyStreak = 0;
+        }
 
         const currentStreak = this.gameState.dailyStreak;
-        const isClaimable = timeSince > oneDay;
         
-        // Base reward calculation
-        const productionPerSec = this.getAutoPower() + (this.getClickPower() * 2);
-        const playerPower = Math.max(100, productionPerSec * 60);
+        let isClaimable = false;
+        if (currentStreak === 0 && this.gameState.lastDailyClaim === 0) {
+            isClaimable = playtimeSinceStart >= threeMinutes;
+        } else {
+            isClaimable = (this.gameState.lastDailyClaim !== 0) && (timeSince > halfDay);
+        }
         
         if (this.els.dailyGrid) {
-            this.els.dailyGrid.innerHTML = '';
+            // Only full render if empty or streak changed
+            if (this.els.dailyGrid.children.length === 0 || this._lastRenderedStreak !== currentStreak) {
+                this.els.dailyGrid.innerHTML = '';
+                this._lastRenderedStreak = currentStreak;
+                const weekStart = Math.floor(currentStreak / 7) * 7;
+                
+                for (let i = 0; i < 7; i++) {
+                    const dayIdx = weekStart + i;
+                    const type = this.getDailyRewardType(dayIdx);
+                    const val = this.getDailyRewardValue(dayIdx, Math.max(100, (this.getAutoPower() + this.getClickPower()) * 60));
+                    
+                    const isCurrent = (dayIdx === currentStreak);
+                    let stateClass = 'future-day';
+                    if (dayIdx < currentStreak) stateClass = 'already-claimed';
+                    if (isCurrent) stateClass = isClaimable ? 'active-ready' : 'active-locked';
+
+                    const card = document.createElement('div');
+                    card.className = `day-card-infinite ${stateClass} type-${type}`;
+                    card.dataset.dayIdx = dayIdx;
+                    
+                    let icon = 'fa-coins';
+                    let label = `$${this.formatNumber(val)}`;
+                    
+                    if (type === 'gems') { icon = 'fa-gem'; label = `${val}`; }
+                    else if (type === 'mega') { icon = 'fa-gem'; label = `${val.gems}`; }
+                    else if (type === 'buff') { icon = 'fa-bolt-lightning'; label = `2X`; }
+                    else if (type === 'jackpot') { icon = 'fa-crown'; label = `${val.gems}`; }
+
+                    if (type === 'mega' || type === 'jackpot') {
+                        label = `$${this.formatNumber(val.cash)}<br>+${val.gems}`;
+                    }
+
+                    // Day 2 (index 1) special "SECRET" look
+                    const isSecret = (dayIdx % 7 === 1) && (dayIdx >= currentStreak);
+                    const dayInWeek = (dayIdx % 7) + 1;
+                    const isJackpot = (dayInWeek === 7);
+                    
+                    if (isJackpot) card.classList.add('jackpot-card');
+                    
+                    card.innerHTML = `
+                        <div class="day-label">DAY ${dayInWeek}</div>
+                        <div class="day-icon-large ${type === 'jackpot' ? 'jackpot-icon-premium' : ''} ${isSecret ? 'secret-icon' : ''} ${isJackpot ? 'jackpot-gold' : ''}">
+                            <i class="fa-solid ${isSecret ? 'fa-question' : (isJackpot ? 'fa-crown' : icon)}"></i>
+                        </div>
+                        <div class="reward-main ${isSecret ? 'secret-blur' : ''}">${isSecret ? 'SECRET' : (isJackpot ? 'JACKPOT' : label)}</div>
+                    `;
+                    
+                    card.style.animation = `cardSlideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards ${i * 0.05}s`;
+                    this.els.dailyGrid.appendChild(card);
+                }
+
+                // Scroll to current day
+                setTimeout(() => {
+                    const activeCard = this.els.dailyGrid.querySelector('.active-ready, .active-locked');
+                    if (activeCard) {
+                        activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
+                }, 100);
+            }
+            
+            // Update states for existing cards
+            const cards = this.els.dailyGrid.querySelectorAll('.day-card-infinite');
+            
+            cards.forEach((card, i) => {
+                const dayIdx = parseInt(card.dataset.dayIdx);
+                const isCurrent = (dayIdx === currentStreak);
+                
+                if (dayIdx < currentStreak) {
+                    card.classList.add('already-claimed');
+                    card.classList.remove('active-ready', 'active-locked', 'future-day');
+                } else if (isCurrent) {
+                    if (isClaimable) {
+                        card.classList.remove('active-locked', 'future-day');
+                        card.classList.add('active-ready');
+                    } else {
+                        card.classList.remove('active-ready', 'future-day');
+                        card.classList.add('active-locked');
+                    }
+                } else {
+                    // Future days
+                    card.classList.remove('active-ready', 'active-locked');
+                    card.classList.add('future-day');
+                }
+            });
         }
 
-        // Show a window of days
-        const startDay = currentStreak; 
-        const numToShow = 5; 
-
-        for (let i = 0; i < numToShow; i++) {
-            const dayIndex = startDay + i;
-            const rewardType = this.getDailyRewardType(dayIndex);
-            const val = this.getDailyRewardValue(dayIndex, playerPower);
-            
-            const el = document.createElement('div');
-            const isCurrent = (i === 0);
-            
-            // Class determines styling
-            let stateClass = 'future-day';
-            if (isCurrent) {
-                stateClass = isClaimable ? 'active-ready' : 'active-locked';
-            }
-            
-            el.className = `day-card-infinite ${stateClass} type-${rewardType}`;
-            
-            // NEW: Gift Icon System
-            let iconHtml = '<i class="fa-solid fa-gift"></i>';
-            let label = `$${this.formatNumber(val)}`;
-            
-            if (rewardType === 'buff_speed') { 
-                iconHtml = '<i class="fa-solid fa-gift" style="color: #00ffff;"></i>'; // Cyan Gift
-                label = '2x SPD'; 
-            }
-            if (rewardType === 'big_cash') { 
-                iconHtml = '<i class="fa-solid fa-gifts" style="color: #FFD700;"></i>'; // Gold Gifts
-                label = 'JACKPOT'; 
-            }
-            
-            // Special Visuals for the Claimable Reward
-            if (isCurrent && isClaimable) {
-                 iconHtml = '<i class="fa-solid fa-box-open fa-bounce" style="color: #00ff00;"></i>'; // Green Open Box
-                 label = "OPEN ME!";
-            } else if (isCurrent && !isClaimable) {
-                // Locked/Waiting state
-                iconHtml = '<i class="fa-solid fa-lock"></i>';
-            }
-            
-            el.innerHTML = `
-                <div class="day-header">Day ${dayIndex + 1}</div>
-                <div class="day-icon-large">${iconHtml}</div>
-                <div class="day-reward-text">${label}</div>
-            `;
-            if (this.els.dailyGrid) this.els.dailyGrid.appendChild(el);
-        }
-
+        // Update main timer and badge
         if (isClaimable) {
             if (this.els.claimDailyBtn) {
                 this.els.claimDailyBtn.disabled = false;
-                this.els.claimDailyBtn.textContent = "CLAIM REWARD";
-                this.els.claimDailyBtn.classList.add('pulse-btn-green');
+                this.els.claimDailyBtn.innerHTML = '<i class="fa-solid fa-gift"></i> CLAIM REWARD';
             }
-            if (this.els.dailyTimer) this.els.dailyTimer.classList.add('hidden');
-            
-            if (autoOpen) {
-                this.toggleModal('daily-rewards-modal', true);
-            }
-            
             if (this.els.dailyBadge) this.els.dailyBadge.classList.remove('hidden');
-            if (this.els.dailyRewardBtn) this.els.dailyRewardBtn.classList.add('pulse-btn');
-            
+            if (autoOpen) this.toggleModal('daily-rewards-modal', true);
         } else {
+            let remaining;
+            if (currentStreak === 0 && this.gameState.lastDailyClaim === 0) {
+                remaining = Math.max(0, threeMinutes - playtimeSinceStart);
+            } else {
+                remaining = Math.max(0, halfDay - timeSince);
+            }
+            
             if (this.els.claimDailyBtn) {
                 this.els.claimDailyBtn.disabled = true;
-                this.els.claimDailyBtn.textContent = "COME BACK LATER";
-                this.els.claimDailyBtn.classList.remove('pulse-btn-green');
+                this.els.claimDailyBtn.innerHTML = `<i class="fa-solid fa-clock"></i> ${this.formatTimeShort(Math.ceil(remaining / 1000))}`;
             }
-            if (this.els.dailyTimer) {
-                this.els.dailyTimer.classList.remove('hidden');
-                this.updateDailyTimer();
-            }
-            
             if (this.els.dailyBadge) this.els.dailyBadge.classList.add('hidden');
-            if (this.els.dailyRewardBtn) this.els.dailyRewardBtn.classList.remove('pulse-btn');
         }
     }
 
     getDailyRewardType(dayIndex) {
-        // Pattern: Cash, Cash, Buff, Cash, Cash, Big Cash
-        if ((dayIndex + 1) % 6 === 0) return 'big_cash';
-        if ((dayIndex + 1) % 3 === 0) return 'buff_speed';
+        // Pattern: Day 2 is Mega, Day 7 is Jackpot
+        const dayInWeek = (dayIndex % 7) + 1;
+        
+        if (dayInWeek === 7) return 'jackpot';
+        if (dayInWeek === 2) return 'mega';
+        if (dayInWeek === 5) return 'buff';
+        if (dayInWeek === 3) return 'gems';
+        if (dayInWeek === 1) return 'gems'; // Day 1 is now Gems
         return 'cash';
     }
 
     getDailyRewardValue(dayIndex, basePower) {
-        // Dynamic scaling: Should be relevant to user's CURRENT status
-        // If user has 1M cash, getting 100 is useless.
-        // Scale against whichever is higher: Production or % of Current Cash
+        const type = this.getDailyRewardType(dayIndex);
         
-        const productionScale = basePower; // Already derived from 1 min of production
-        
-        // 50% of current cash as baseline for daily reward (MEGA BUFFED)
-        const cashScale = this.gameState.money * 0.50;
-        
-        const baseValue = Math.max(productionScale, cashScale);
-        
-        // Ensure minimum 500
-        const finalBase = Math.max(500, baseValue);
+        // Day 1 special reward: 100 Gems
+        if (dayIndex === 0) {
+            return 100;
+        }
 
-        // Stronger Streak Bonus: 25% per day instead of 15%
-        const streakBonus = 1 + (dayIndex * 0.25); 
-        
-        if ((dayIndex + 1) % 6 === 0) return Math.floor(finalBase * 5 * streakBonus); // Jackpot (5x)
-        return Math.floor(finalBase * streakBonus); // Regular
+        const cashScale = this.gameState.money * 0.40;
+        const productionScale = basePower * 120;
+        const baseVal = Math.max(productionScale, cashScale, 1000);
+        const streakBonus = 1 + (dayIndex * 0.1);
+
+        switch(type) {
+            case 'jackpot': 
+                return {
+                    cash: Math.floor(baseVal * 10 * streakBonus),
+                    gems: Math.floor(100 + (dayIndex * 20))
+                };
+            case 'mega':
+                // Day 2 (dayIndex === 1) is now 250 gems
+                if (dayIndex === 1) {
+                    return {
+                        cash: Math.floor(baseVal * 3 * streakBonus),
+                        gems: 250
+                    };
+                }
+                return {
+                    cash: Math.floor(baseVal * 3 * streakBonus),
+                    gems: Math.floor(50 + (dayIndex * 10))
+                };
+            case 'gems':
+                if (dayIndex === 2) {
+                    return 300; // Day 3 reward
+                }
+                return Math.floor(25 + (dayIndex * 5));
+            case 'buff': return 120; // 120 seconds
+            default: return Math.floor(baseVal * streakBonus);
+        }
     }
 
     claimDaily() {
-        const now = Date.now();
         const streak = this.gameState.dailyStreak;
-        
-        // Recalculate based on current stats
-        const productionPerSec = this.getAutoPower() + (this.getClickPower() * 2);
-        const playerPower = Math.max(100, productionPerSec * 60);
-
         const type = this.getDailyRewardType(streak);
-        const val = this.getDailyRewardValue(streak, playerPower);
+        const val = this.getDailyRewardValue(streak, Math.max(100, (this.getAutoPower() + this.getClickPower()) * 60));
         
-        if (type === 'cash' || type === 'big_cash') {
-            this.addMoney(val);
-        } else if (type === 'buff_speed') {
-            this.activateAdBoost(); // Re-use ad boost logic for now (speed boost)
-            alert("SPEED BUFF ACTIVATED!");
+        // Double check claimability
+        const now = Date.now();
+        const oneDay = 24 * 60 * 60 * 1000;
+        const threeMinutes = 3 * 60 * 1000;
+        const timeSince = now - this.gameState.lastDailyClaim;
+        const playtimeSinceStart = now - this.gameState.startTime;
+        
+        let isClaimable = false;
+        if (streak === 0 && this.gameState.lastDailyClaim === 0) {
+            isClaimable = playtimeSinceStart >= threeMinutes;
+        } else {
+            isClaimable = (this.gameState.lastDailyClaim !== 0) && (timeSince > oneDay);
         }
         
-        this.gameState.lastDailyClaim = now;
+        if (!isClaimable) return;
+
+        // Play sound immediately
+        this.playClickSound();
+
+        if (type === 'cash' || typeof val === 'number') {
+            if (type === 'buff') {
+                this.adManager.boosts['turbo'] = Date.now() + (val * 1000);
+            } else if (type === 'gems') {
+                this.gameState.gems += val;
+            } else {
+                this.addMoney(val);
+            }
+        } else if (type === 'jackpot' || type === 'mega') {
+            this.addMoney(val.cash);
+            this.gameState.gems += val.gems;
+        }
+        
+        this.gameState.lastDailyClaim = Date.now();
         this.gameState.dailyStreak++;
         
+        // Juicy Feedback - Trigger scale/shake via CSS class instead of direct style
+        if (this.els.claimDailyBtn) {
+            this.els.claimDailyBtn.classList.add('claim-success-anim');
+            setTimeout(() => {
+                this.els.claimDailyBtn.classList.remove('claim-success-anim');
+            }, 600);
+        }
+
+        // Confetti for extra juice!
+        if (typeof confetti === 'function') {
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#FFD93D', '#6BCB77', '#4D96FF', '#FF6B6B']
+            });
+        }
+
+        if (type === 'jackpot' || type === 'mega') {
+            this.showCustomRewardModal(val.cash, false, type === 'jackpot' ? "ULTIMATE JACKPOT!" : "MEGA STASH!");
+            this.spawnDamageNumber(`+${val.gems} GEMS`, window.innerWidth/2, window.innerHeight/2, '#9b59b6');
+        } else {
+            this.showCustomRewardModal(val, type === 'gems', "DAILY REWARD!");
+        }
+
         this.saveGame();
-        this.checkDailyReward();
+        this.checkDailyReward(false);
+        this.updateDisplay();
     }
 
     updateDailyTimer() {
         const now = Date.now();
-        const nextTime = this.gameState.lastDailyClaim + (24 * 60 * 60 * 1000);
-        const diff = nextTime - now;
+        const streak = this.gameState.dailyStreak;
+        const isFirstDay = (streak === 0 && this.gameState.lastDailyClaim === 0);
         
-        if (diff > 0) {
-            const h = Math.floor(diff / (1000 * 60 * 60));
-            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            this.els.dailyTimer.textContent = `Next in: ${h}h ${m}m`;
+        let nextTime;
+        if (isFirstDay) {
+            nextTime = this.gameState.startTime + (3 * 60 * 1000);
+        } else {
+            nextTime = this.gameState.lastDailyClaim + (12 * 60 * 60 * 1000);
+        }
+        
+        const diff = nextTime - now;
+                if (isReady) {
+                    if (this.els.claimDailyBtn.disabled) {
+                        this.els.claimDailyBtn.disabled = false;
+                        this.els.claimDailyBtn.innerHTML = '<i class="fa-solid fa-gift"></i> CLAIM REWARD';
+                        this.checkDailyReward(false);
+                    }
+                } else if (diff > 0) {
+            // Update Button Live Text if modal is open
+            if (this.els.claimDailyBtn) {
+                const h = Math.floor(diff / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+                if (isFirstDay) {
+                    this.els.claimDailyBtn.disabled = true;
+                    this.els.claimDailyBtn.innerHTML = `<i class="fa-solid fa-clock"></i> UNLOCKS IN ${m}:${s.toString().padStart(2, '0')}`;
+                } else {
+                    this.els.claimDailyBtn.disabled = true;
+                    this.els.claimDailyBtn.innerHTML = `<i class="fa-solid fa-clock"></i> NEXT IN ${h}h ${m}m ${s}s`;
+                }
+            }
         }
     }
 
@@ -2706,6 +2938,9 @@ class RoboClicker {
         if (this.gameState.boss.autoShootLevel > 0) {
             this.startBossAutoShoot();
         }
+
+        // Start Critical Target spawning
+        this.startCriticalTargetLoop();
     }
 
     closeBossBattle() {
@@ -2713,14 +2948,13 @@ class RoboClicker {
         this.els.bossOverlay.classList.add('hidden');
         this.playClickSound();
         this.stopBossAutoShoot();
+        this.stopCriticalTargetLoop();
     }
 
     updateBossUI() {
         if (!this.els.bossLevel) return;
         
         const b = this.gameState.boss;
-        const now = Date.now();
-        const isLocked = b.lockedUntil && now < b.lockedUntil;
         
         this.els.bossLevel.textContent = b.level;
         this.els.bossHpCurrent.textContent = Math.ceil(b.hp);
@@ -2731,39 +2965,46 @@ class RoboClicker {
         
         this.els.bossClickDamage.textContent = b.clickDamage;
         
+        if (this.els.bossRecDamage) {
+            const recDamage = Math.ceil(b.maxHp / 100);
+            this.els.bossRecDamage.textContent = this.formatNumber(recDamage);
+        }
+        
         this.els.bossDamageCost.textContent = `$${this.formatNumber(this.getBossUpgradeCost('damage'))}`;
+        if (this.els.bossCritCost) {
+            this.els.bossCritCost.textContent = `$${this.formatNumber(this.getBossUpgradeCost('crit'))}`;
+        }
         this.els.bossAutoCost.textContent = `$${this.formatNumber(this.getBossUpgradeCost('auto'))}`;
 
-        // Lock UI Handling
+        // Update button states
+        const damageCost = this.getBossUpgradeCost('damage');
+        const critCost = this.getBossUpgradeCost('crit');
+        const autoCost = this.getBossUpgradeCost('auto');
+
+        const damageBtn = document.querySelector('#upgrade-boss-damage .boss-buy-btn');
+        const critBtn = document.querySelector('#upgrade-boss-crit .boss-buy-btn');
+        const autoBtn = document.querySelector('#upgrade-boss-auto .boss-buy-btn');
+
+        if (damageBtn) damageBtn.classList.toggle('disabled', this.gameState.money < damageCost);
+        if (critBtn) critBtn.classList.toggle('disabled', this.gameState.money < critCost);
+        if (autoBtn) autoBtn.classList.toggle('disabled', this.gameState.money < autoCost);
+
+        // Lock UI Handling removed as requested
         if (this.els.bossRobot) {
-            if (isLocked) {
-                this.els.bossRobot.classList.add('locked');
-                const remaining = Math.ceil((b.lockedUntil - now) / 1000);
-                const mins = Math.floor(remaining / 60);
-                const secs = remaining % 60;
-                
-                // Update lock timer display if we add it to HTML
-                let timerEl = document.getElementById('boss-lock-timer');
-                if (timerEl) {
-                    timerEl.textContent = `LOCKED: ${mins}:${secs.toString().padStart(2, '0')}`;
-                    timerEl.classList.remove('hidden');
-                }
-            } else {
-                this.els.bossRobot.classList.remove('locked');
-                let timerEl = document.getElementById('boss-lock-timer');
-                if (timerEl) timerEl.classList.add('hidden');
-            }
+            this.els.bossRobot.classList.remove('locked');
+            let timerEl = document.getElementById('boss-lock-timer');
+            if (timerEl) timerEl.classList.add('hidden');
         }
     }
 
     getBossUpgradeCost(type) {
         const b = this.gameState.boss;
         if (type === 'damage') {
-            // Money cost scaling
-            return Math.floor(5000 * Math.pow(1.6, b.damageUpgradeLevel));
+            return Math.floor(1000 * Math.pow(1.6, b.damageUpgradeLevel));
+        } else if (type === 'crit') {
+            return Math.floor(1000 * Math.pow(1.75, b.critChanceLevel));
         } else {
-            // Money cost scaling
-            return Math.floor(25000 * Math.pow(1.8, b.autoShootLevel));
+            return Math.floor(1000 * Math.pow(1.8, b.autoShootLevel));
         }
     }
 
@@ -2773,7 +3014,9 @@ class RoboClicker {
             this.gameState.money -= cost;
             if (type === 'damage') {
                 this.gameState.boss.damageUpgradeLevel++;
-                this.gameState.boss.clickDamage += 2; // Buffed damage for money cost
+                this.gameState.boss.clickDamage += 2;
+            } else if (type === 'crit') {
+                this.gameState.boss.critChanceLevel++;
             } else {
                 this.gameState.boss.autoShootLevel++;
                 this.startBossAutoShoot();
@@ -2783,7 +3026,6 @@ class RoboClicker {
             this.playClickSound();
             this.saveGame();
         } else {
-            // Shake money container to show can't afford
             if (this.els.money) {
                 this.els.money.classList.add('shake-error');
                 setTimeout(() => this.els.money.classList.remove('shake-error'), 500);
@@ -2791,30 +3033,137 @@ class RoboClicker {
         }
     }
 
+    // --- Dynamic Critical Targets ---
+    startCriticalTargetLoop() {
+        if (this.gameState.boss.criticalTargetTimer) return;
+        this.spawnCriticalTarget();
+        this.gameState.boss.criticalTargetTimer = setInterval(() => this.spawnCriticalTarget(), 3000); // Every 3 seconds
+    }
+
+    stopCriticalTargetLoop() {
+        if (this.gameState.boss.criticalTargetTimer) {
+            clearInterval(this.gameState.boss.criticalTargetTimer);
+            this.gameState.boss.criticalTargetTimer = null;
+        }
+        if (this.els.criticalTargets) {
+            this.els.criticalTargets.innerHTML = '';
+        }
+    }
+
+    spawnCriticalTarget() {
+        if (!this.els.criticalTargets || this.els.bossOverlay.classList.contains('hidden')) return;
+        
+        const target = document.createElement('div');
+        target.className = 'critical-target';
+        
+        // Random position within boss area (centered around robot)
+        const x = 25 + Math.random() * 50; // 25% to 75%
+        const y = 15 + Math.random() * 50; // 15% to 65%
+        
+        target.style.left = `${x}%`;
+        target.style.top = `${y}%`;
+        
+        // Handle click
+        target.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            this.handleCriticalTargetClick(target, e);
+        });
+        
+        this.els.criticalTargets.appendChild(target);
+        
+        // Auto remove after 2 seconds
+        setTimeout(() => {
+            if (target.parentNode) {
+                target.style.opacity = '0';
+                target.style.transform = 'scale(0)';
+                setTimeout(() => target.remove(), 400);
+            }
+        }, 2000);
+    }
+
+    handleCriticalTargetClick(target, e) {
+        if (target.classList.contains('hit')) return;
+        target.classList.add('hit');
+        
+        // Massive Damage: 10x current click damage
+        const damage = this.gameState.boss.clickDamage * 10;
+        this.damageBoss(damage);
+        this.spawnLaser(e.clientX, e.clientY);
+        this.spawnDamagePop(e.clientX, e.clientY, damage, true);
+        
+        // Visual Feedback
+        if (this.els.bossRobot) {
+            this.els.bossRobot.classList.add('critical-hit-flash');
+            setTimeout(() => this.els.bossRobot.classList.remove('critical-hit-flash'), 300);
+        }
+        
+        // Sound & Haptic
+        this.playClickSound(); // Re-use for now
+        if (window.navigator.vibrate) window.navigator.vibrate(100);
+        
+        setTimeout(() => target.remove(), 300);
+    }
+
     handleBossClick(e) {
         if (!this.gameState.boss) return;
         
-        // Check Lock
-        if (this.gameState.boss.lockedUntil && Date.now() < this.gameState.boss.lockedUntil) {
-            this.playNotificationSound();
-            return;
+        // Check for critical section click
+        let multiplier = 1;
+        let isCriticalSection = false;
+        
+        if (e.target && e.target.classList.contains('critical-section')) {
+            multiplier = parseFloat(e.target.getAttribute('data-mult')) || 1;
+            isCriticalSection = true;
         }
         
-        this.damageBoss(this.gameState.boss.clickDamage);
+        // Extremely Rare Crit Logic: Making dynamic targets the clear primary focus
+        const critChance = 0.01 + (this.gameState.boss.critChanceLevel * 0.01); // Base 1% + 1% per level
+        const isRandomCrit = Math.random() < critChance;
         
-        // Use coordinates relative to overlay for laser spawning
-        const rect = this.els.bossOverlay.getBoundingClientRect();
-        const localX = e.clientX - rect.left;
-        const localY = e.clientY - rect.top;
+        let damage = this.gameState.boss.clickDamage * multiplier;
+        if (isRandomCrit) {
+            damage *= 2;
+        }
         
+        this.damageBoss(damage);
         this.spawnLaser(e.clientX, e.clientY);
-        this.spawnDamagePop(e.clientX, e.clientY, this.gameState.boss.clickDamage);
+        
+        // Visual Damage Pop: ONLY show golden text for the rare random crit,
+        // even if clicking a critical section (eyes/core).
+        // This makes the "GOLDEN" text much rarer and more special.
+        this.spawnDamagePop(e.clientX, e.clientY, damage, isRandomCrit);
         
         // Visual feedback - Click Animation
         if (this.els.bossRobot) {
             this.els.bossRobot.classList.remove('clicked');
             void this.els.bossRobot.offsetWidth; // Force reflow
             this.els.bossRobot.classList.add('clicked');
+            
+            // Color flash based on hit type
+            if (isCriticalSection) {
+                this.els.bossRobot.classList.add('critical-hit-flash');
+                setTimeout(() => this.els.bossRobot.classList.remove('critical-hit-flash'), 200);
+                
+                // Screen shake for critical sections
+                /* Removed per user request: no whole screen vibration
+                if (this.els.bossOverlay) {
+                    this.els.bossOverlay.classList.add('shake-screen');
+                    setTimeout(() => this.els.bossOverlay.classList.remove('shake-screen'), 200);
+                }
+                */
+            } else {
+                this.els.bossRobot.classList.add('normal-hit-flash');
+                setTimeout(() => this.els.bossRobot.classList.remove('normal-hit-flash'), 100);
+            }
+        }
+        
+        // Haptic Feedback
+        if (window.navigator && window.navigator.vibrate) {
+            if (isCriticalSection) {
+                window.navigator.vibrate([20, 30, 20]);
+            } else {
+                window.navigator.vibrate(10);
+            }
         }
         
         this.playClickSound();
@@ -2832,23 +3181,20 @@ class RoboClicker {
 
     levelUpBoss() {
         this.gameState.boss.level++;
-        this.gameState.boss.maxHp = Math.floor(100 * Math.pow(1.5, this.gameState.boss.level - 1));
+        // Balanced scaling: Smooth progression
+        this.gameState.boss.maxHp = Math.floor(100 * Math.pow(2.2, this.gameState.boss.level - 1));
         this.gameState.boss.hp = this.gameState.boss.maxHp;
         
-        // 2-Minute Lock after defeat
-        this.gameState.boss.lockedUntil = Date.now() + 120000; // 2 minutes
+        // Lock removed as requested
+        this.gameState.boss.lockedUntil = 0;
         
-        // Reward for defeating boss - 25 Gems
-        const rewardGems = 25;
+        // Reward for defeating boss - Always 50 gems as requested
+        const rewardGems = 50;
         this.gameState.gems += rewardGems;
         this.updateDisplay();
         
-        // Show floating reward text
         this.showFloatingText(`+${rewardGems} Gems!`, 'gem-reward');
-        
-        // Show Victory Prompt
         this.showCustomRewardModal(rewardGems, true, "BOSS DEFEATED!");
-        
         this.playNotificationSound();
     }
 
@@ -2859,7 +3205,6 @@ class RoboClicker {
         const fromLeft = Math.random() > 0.5;
         laser.className = `pov-laser ${fromLeft ? 'laser-left' : 'laser-right'}`;
         
-        // Random slight variation to start position
         const offset = (Math.random() - 0.5) * 100;
         if (fromLeft) {
             laser.style.left = `calc(5% + ${offset}px)`;
@@ -2868,24 +3213,21 @@ class RoboClicker {
         }
         
         this.els.laserContainer.appendChild(laser);
-        
-        // Remove after animation
         setTimeout(() => laser.remove(), 600);
     }
 
-    spawnDamagePop(x, y, amount) {
+    spawnDamagePop(x, y, amount, isCritical = false) {
         const pop = document.createElement('div');
-        pop.className = 'damage-pop';
-        pop.textContent = `-${this.formatNumber(amount)}`;
+        pop.className = `damage-pop ${isCritical ? 'critical' : ''}`;
+        // User asked to make numbers not as big as "violent", so we'll keep it clean
+        pop.textContent = isCritical ? `CRIT! -${this.formatNumber(amount)}` : `-${this.formatNumber(amount)}`;
         
-        // Position near click with random offset
         const offsetX = (Math.random() - 0.5) * 60;
         const offsetY = (Math.random() - 0.5) * 60;
         pop.style.left = `${x + offsetX}px`;
         pop.style.top = `${y + offsetY}px`;
         
-        // Add random slight rotation
-        const randomRot = (Math.random() * 30 - 15);
+        const randomRot = (Math.random() * 40 - 20);
         pop.style.setProperty('--random-rot', `${randomRot}deg`);
         
         document.body.appendChild(pop);
@@ -2897,12 +3239,23 @@ class RoboClicker {
         if (this.gameState.boss.autoShootLevel > 0) {
             const interval = Math.max(100, 1000 - (this.gameState.boss.autoShootLevel * 100));
             this.gameState.boss.autoShootInterval = setInterval(() => {
+                // Ensure auto-shoot ONLY works when the boss overlay is visible
                 if (!this.els.bossOverlay.classList.contains('hidden')) {
                     const rect = this.els.bossRobot.getBoundingClientRect();
                     const centerX = rect.left + rect.width / 2;
                     const centerY = rect.top + rect.height / 2;
-                    this.damageBoss(1); // Auto shoot damage
+                    
+                    // Damage the boss
+                    this.damageBoss(1);
+                    
+                    // Trigger visual effects
                     this.spawnLaser(centerX, centerY);
+                    
+                    // Add a special auto-shoot juice to the robot
+                    if (this.els.bossRobot) {
+                        this.els.bossRobot.classList.add('auto-hit');
+                        setTimeout(() => this.els.bossRobot.classList.remove('auto-hit'), 100);
+                    }
                 }
             }, interval);
         }
@@ -2962,14 +3315,17 @@ class RoboClicker {
 
         // New Bonus Drawer Listeners
         if (this.els.drawerToggle) {
-            this.els.drawerToggle.addEventListener('click', this.toggleBonusDrawer);
+            this.els.drawerToggle.addEventListener('click', () => this.toggleBonusDrawer());
         }
         if (this.els.closeBonusBtn) {
-            this.els.closeBonusBtn.addEventListener('click', this.toggleBonusDrawer);
+            this.els.closeBonusBtn.addEventListener('click', () => this.toggleBonusDrawer());
         }
         
-        if (this.els.dailyDrawerToggle) {
-            this.els.dailyDrawerToggle.addEventListener('click', this.toggleDailyDrawer);
+        if (this.els.dailyRewardBtn) {
+            this.els.dailyRewardBtn.addEventListener('click', () => this.toggleDailyDrawer());
+        }
+        if (this.els.closeDailyBtn) {
+            this.els.closeDailyBtn.addEventListener('click', () => this.toggleDailyDrawer(false));
         }
 
         // Sliding Ad Banner Click - Handled in triggerSlidingAd creation logic now
@@ -3007,9 +3363,15 @@ class RoboClicker {
 
         // Enhanced Close Button Logic
         document.querySelectorAll('.close-modal-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
                 const targetId = btn.getAttribute('data-target');
-                this.toggleModal(null, false);
+                if (targetId) {
+                    this.toggleModal(targetId, false);
+                } else {
+                    // Fallback to closing everything if no target specified
+                    this.toggleModal(null, false);
+                }
+                e.stopPropagation();
             });
         });
 
@@ -3035,10 +3397,6 @@ class RoboClicker {
             }, { passive: false });
         }
 
-        document.getElementById('daily-reward-btn').addEventListener('click', () => {
-            this.checkDailyReward(false); // Update UI
-            this.toggleModal('daily-rewards-modal', true);
-        });
         this.els.claimDailyBtn.addEventListener('click', () => this.claimDaily());
         
         // Offline Claim
@@ -3061,6 +3419,19 @@ class RoboClicker {
         document.getElementById('claim-offline-2x-btn').addEventListener('click', () => {
              this.watchRewardedAd('offline_2x');
         });
+
+        // Playtime Rewards
+        if (this.els.playtimeRewardBtn) {
+            this.els.playtimeRewardBtn.addEventListener('click', () => {
+                const isOpen = this.els.playtimeRewardsModal.classList.contains('open');
+                this.togglePlaytimeDrawer(!isOpen);
+            });
+        }
+        if (this.els.closePlaytimeBtn) {
+            this.els.closePlaytimeBtn.addEventListener('click', () => {
+                this.togglePlaytimeDrawer(false);
+            });
+        }
 
         // Evolution Modal Claim
         const evoClaimBtn = document.getElementById('evo-claim-btn');
@@ -3092,6 +3463,8 @@ class RoboClicker {
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.saveGame();
+            } else {
+                this._lastPlaytimeTick = Date.now();
             }
         });
 
@@ -3224,7 +3597,10 @@ class RoboClicker {
                 if (this.els.idlePrompt) this.els.idlePrompt.classList.remove('hidden');
             }
 
-        // Auto Income
+            // --- PROGRESS SYSTEMS ---
+            this.checkDailyReward(false); // Live update for timers
+
+            // Auto Income
         const autoIncome = this.calculateAutoIncome();
         if (autoIncome > 0) {
              this.addMoney(autoIncome / 10); // per 100ms
@@ -3338,21 +3714,24 @@ class RoboClicker {
                 if (this.els.turboOverlay) this.els.turboOverlay.classList.add('hidden');
             }
 
-            if (!this.els.dailyTimer.classList.contains('hidden')) {
-                this.updateDailyTimer();
-            }
-            this.checkNotifications(); 
-            this.updateHUD(); 
-            this.updateUpgradeAffordability();
-            this.updateBoostsUI(); // New UI Update
+        if (this.els.dailyRewardsModal && !this.els.dailyRewardsModal.classList.contains('hidden')) {
+            this.updateDailyTimer();
+        }
+        this.checkNotifications(); 
+        this.updateHUD(); 
+        this.updateUpgradeAffordability();
+        this.updateBoostsUI(); // New UI Update
 
-            // --- AUTO SPAWN ADS & OFFERS ---
-            // Sliding Ad Banner removed
-            
-            // Free Upgrade Bubble: Very Frequent (5% chance per tick if none exist)
-            if (Math.random() < 0.05) {
-                this.spawnRandomFreeUpgrade();
-            }
+        // --- AUTO SPAWN ADS & OFFERS ---
+        // Sliding Ad Banner removed
+        
+        // Free Upgrade Bubble: Very Frequent (5% chance per tick if none exist)
+        if (Math.random() < 0.05) {
+            this.spawnRandomFreeUpgrade();
+        }
+
+        // Update Playtime
+        this.updatePlaytime();
 
         }, 100);
     }
@@ -3454,6 +3833,253 @@ class RoboClicker {
                 child.remove();
             }
         });
+    }
+
+    updatePlaytime() {
+        const now = Date.now();
+        if (!this._lastPlaytimeTick) {
+            this._lastPlaytimeTick = now;
+        }
+
+        // 12-Hour Reset Check
+        const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+        if (!this.gameState.lastPlaytimeReset) {
+            this.gameState.lastPlaytimeReset = now;
+        }
+        if (now - this.gameState.lastPlaytimeReset > TWELVE_HOURS) {
+            this.gameState.sessionPlaytime = 0;
+            this.gameState.claimedPlaytimeRewards = [];
+            this.gameState.lastPlaytimeReset = now;
+            // Force re-render of the grid to show locked states
+            if (this.els.playtimeRewardsGrid) this.els.playtimeRewardsGrid.innerHTML = '';
+            this.saveGame();
+            console.log("Playtime rewards reset (12h cycle)");
+        }
+
+        const dt = (now - this._lastPlaytimeTick) / 1000;
+        this._lastPlaytimeTick = now;
+
+        // Only increment if visible
+        // We also check for massive dt spikes (e.g. > 5s) just in case visibility handler missed
+        if (!document.hidden && dt < 5) {
+            // Apply Time Warp Multiplier
+            let multiplier = 1;
+            if (this.gameState.gemUpgrades && this.gameState.gemUpgrades['perm_playtime_speed']) {
+                multiplier = 2;
+            }
+
+            this.gameState.sessionPlaytime = (this.gameState.sessionPlaytime || 0) + (dt * multiplier);
+        }
+        
+        // Update notification badge
+        let claimableCount = 0;
+        PLAYTIME_REWARDS.forEach(reward => {
+            const isClaimed = this.gameState.claimedPlaytimeRewards.includes(reward.id);
+            const isReady = this.gameState.sessionPlaytime >= reward.time;
+            if (isReady && !isClaimed) {
+                claimableCount++;
+            }
+        });
+
+        if (this.els.playtimeBadge) {
+            if (claimableCount > 0) {
+                this.els.playtimeBadge.textContent = claimableCount;
+                this.els.playtimeBadge.classList.remove('hidden');
+            } else {
+                this.els.playtimeBadge.classList.add('hidden');
+            }
+        }
+
+        // Update drawer timer if visible
+        if (this.els.playtimeRewardsModal && this.els.playtimeRewardsModal.classList.contains('open')) {
+            // Real-time progress update for cards
+            this.renderPlaytimeRewards();
+        }
+    }
+
+    formatTimeShort(seconds) {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    toggleDailyDrawer(show) {
+        if (!this.els.dailyRewardsModal) return;
+        
+        const isCurrentlyOpen = this.els.dailyRewardsModal.classList.contains('open');
+        const shouldShow = show !== undefined ? show : !isCurrentlyOpen;
+
+        if (shouldShow) {
+            this.checkDailyReward(false); // Render initial state
+            this.els.dailyRewardsModal.classList.add('open');
+            // Mutual exclusivity
+            if (this.els.bonusDrawer) this.els.bonusDrawer.classList.remove('open');
+            if (this.els.playtimeRewardsModal) this.els.playtimeRewardsModal.classList.remove('open');
+        } else {
+            this.els.dailyRewardsModal.classList.remove('open');
+        }
+    }
+
+    togglePlaytimeDrawer(show) {
+        if (!this.els.playtimeRewardsModal) return;
+        
+        if (show) {
+            this.els.playtimeRewardsGrid.innerHTML = ''; // Reset grid to trigger animations
+            this.renderPlaytimeRewards();
+            this.els.playtimeRewardsModal.classList.add('open');
+            // Close other drawers
+            if (this.els.bonusDrawer) this.els.bonusDrawer.classList.remove('open');
+        } else {
+            this.els.playtimeRewardsModal.classList.remove('open');
+        }
+    }
+
+    toggleDailyDrawer(show) {
+        if (!this.els.dailyRewardsModal) return;
+        
+        const isOpening = (show === undefined) ? this.els.dailyRewardsModal.classList.contains('hidden') : show;
+        
+        if (isOpening) {
+            this._lastRenderedStreak = -1; // Force re-render for animations
+            this.checkDailyReward(false);
+            this.toggleModal('daily-rewards-modal', true);
+        } else {
+            this.toggleModal('daily-rewards-modal', false);
+        }
+    }
+
+    renderPlaytimeRewards() {
+        if (!this.els.playtimeRewardsGrid) return;
+        
+        // If grid is empty, do a full render once
+        if (this.els.playtimeRewardsGrid.children.length === 0) {
+            this.els.playtimeRewardsGrid.innerHTML = '';
+            PLAYTIME_REWARDS.forEach(reward => {
+                const card = document.createElement('div');
+                card.className = 'playtime-reward-card locked';
+                card.dataset.id = reward.id;
+                
+                // Calculate initial money to prevent flash of $0
+                const runMoney = (typeof this.gameState.runMoney !== 'undefined') ? this.gameState.runMoney : (this.gameState.totalMoney || 0);
+                const baseMoney = Math.max(100, runMoney);
+                const moneyReward = baseMoney * 2;
+
+                card.innerHTML = `
+                    <div class="playtime-icon-large" style="color: ${reward.color}">
+                        <i class="fa-solid ${reward.icon}"></i>
+                    </div>
+                    <div class="playtime-info-mini">
+                        <div class="playtime-title-mini">${reward.label}</div>
+                        <div class="playtime-reward-pills">
+                            <div class="reward-pill pill-gems">
+                                <i class="fa-solid fa-gem"></i> ${reward.reward.gems}
+                            </div>
+                            <div class="reward-pill pill-money">
+                                <i class="fa-solid fa-money-bill"></i> <span class="money-val">$${this.formatNumber(moneyReward)}</span>
+                            </div>
+                        </div>
+                        <div class="reward-progress-container">
+                            <div class="reward-progress-bar"></div>
+                        </div>
+                    </div>
+                    <button class="playtime-claim-btn-mini" disabled>
+                        ${reward.time}
+                    </button>
+                `;
+                this.els.playtimeRewardsGrid.appendChild(card);
+            });
+        }
+
+        // Live updates for existing cards
+        const cards = this.els.playtimeRewardsGrid.querySelectorAll('.playtime-reward-card');
+        cards.forEach((card, index) => {
+            const reward = PLAYTIME_REWARDS[index];
+            const isClaimed = this.gameState.claimedPlaytimeRewards.includes(reward.id);
+            const isReady = this.gameState.sessionPlaytime >= reward.time;
+            const progress = Math.min(100, (this.gameState.sessionPlaytime / reward.time) * 100);
+            
+            // Dynamic Money: 2x Run Money
+            const runMoney = (typeof this.gameState.runMoney !== 'undefined') ? this.gameState.runMoney : (this.gameState.totalMoney || 0);
+            const baseMoney = Math.max(100, runMoney);
+            const moneyReward = baseMoney * 2;
+
+            // Update classes
+            const statusClass = isClaimed ? 'claimed' : (isReady ? 'ready' : 'locked');
+            if (!card.classList.contains(statusClass)) {
+                card.className = `playtime-reward-card ${statusClass}`;
+            }
+
+            // Update progress bar
+            const progressBar = card.querySelector('.reward-progress-bar');
+            if (progressBar) progressBar.style.width = `${progress}%`;
+
+            // Update money value
+            const moneyVal = card.querySelector('.money-val');
+            if (moneyVal) moneyVal.textContent = `$${this.formatNumber(moneyReward)}`;
+
+            // Update button
+            const btn = card.querySelector('.playtime-claim-btn-mini');
+            if (btn) {
+                if (isClaimed) {
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i>';
+                    btn.disabled = true;
+                    btn.style.background = '#2ecc71';
+                } else if (isReady) {
+                    if (btn.textContent !== 'CLAIM') {
+                        btn.textContent = 'CLAIM';
+                        btn.disabled = false;
+                        btn.style.background = '#e67e22'; // Orange for ready
+                        btn.onclick = () => this.claimPlaytimeReward(reward.id);
+                    }
+                } else {
+                    const remaining = Math.ceil(reward.time - this.gameState.sessionPlaytime);
+                    const timeStr = this.formatTimeShort(remaining);
+                    if (btn.textContent !== timeStr) {
+                        btn.textContent = timeStr;
+                    }
+                    btn.disabled = true;
+                    btn.style.background = '#3498db';
+                }
+            }
+        });
+    }
+
+    claimPlaytimeReward(rewardId) {
+        const reward = PLAYTIME_REWARDS.find(r => r.id === rewardId);
+        if (!reward || this.gameState.claimedPlaytimeRewards.includes(rewardId)) return;
+
+        if (this.gameState.sessionPlaytime >= reward.time) {
+            // Calculate dynamic money reward: 2x Run Money
+            const runMoney = (typeof this.gameState.runMoney !== 'undefined') ? this.gameState.runMoney : (this.gameState.totalMoney || 0);
+            const baseMoney = Math.max(100, runMoney);
+            const moneyReward = baseMoney * 2;
+            
+            // Add rewards
+            this.gameState.gems += reward.reward.gems;
+            this.gameState.money += moneyReward;
+            this.gameState.totalMoney += moneyReward;
+            
+            // Mark as claimed
+            this.gameState.claimedPlaytimeRewards.push(rewardId);
+            
+            // Visual feedback
+            this.showCustomRewardModal(reward.reward.gems, true, `${reward.label} PLAYTIME REWARD!`);
+            this.playNotificationSound();
+            
+            // Re-render
+            this.renderPlaytimeRewards();
+            this.updateDisplay();
+            this.saveGame();
+        }
+    }
+
+    formatTime(seconds) {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     }
 
     startAutoSave() { setInterval(() => this.saveGame(), 30000); }
@@ -3568,6 +4194,14 @@ class RoboClicker {
         // 5. Gem Shop Recovery
         if (!this.gameState.gemUpgrades) this.gameState.gemUpgrades = {};
 
+        // 5.1 Playtime Rewards Recovery
+        if (!this.gameState.claimedPlaytimeRewards) this.gameState.claimedPlaytimeRewards = [];
+        // sessionPlaytime now persists across refreshes
+        if (this.gameState.sessionPlaytime === undefined) this.gameState.sessionPlaytime = 0;
+
+        // 5.2 Ad Cooldowns Recovery
+        if (!this.gameState.adCooldowns) this.gameState.adCooldowns = {};
+
         // 6. Settings Recovery
         if (this.gameState.settings) {
             if (this.els.sfxSlider) this.els.sfxSlider.value = this.gameState.settings.sfxVolume || 100;
@@ -3588,6 +4222,7 @@ class RoboClicker {
                 hp: 100,
                 maxHp: 100,
                 clickDamage: 1,
+                critChanceLevel: 0,
                 autoShootLevel: 0,
                 damageUpgradeLevel: 0,
                 autoShootInterval: null,
@@ -3600,6 +4235,7 @@ class RoboClicker {
             b.hp = Number(b.hp) || 100;
             b.maxHp = Number(b.maxHp) || 100;
             b.clickDamage = Number(b.clickDamage) || 1;
+            b.critChanceLevel = Number(b.critChanceLevel) || 0;
             b.autoShootLevel = Number(b.autoShootLevel) || 0;
             b.damageUpgradeLevel = Number(b.damageUpgradeLevel) || 0;
             b.autoShootInterval = null;
