@@ -307,8 +307,7 @@ class RoboClicker {
             
             // --- NEW: Request Banners ---
             // Request responsive banners for both slots
-            window.CrazyManager.requestResponsiveBanner('banner-container-top');
-            window.CrazyManager.requestResponsiveBanner('banner-container-bottom');
+
         }
     }
     
@@ -2688,7 +2687,7 @@ class RoboClicker {
                     }
 
                     // Day 2 (index 1) special "SECRET" look
-                    const isSecret = (dayIdx % 7 === 1) && (dayIdx >= currentStreak);
+                    const isSecret = (dayIdx % 7 === 5 && dayIdx >= currentStreak) || (dayIdx > currentStreak && dayIdx % 7 !== 1);
                     const dayInWeek = (dayIdx % 7) + 1;
                     const isJackpot = (dayInWeek === 7);
                     
@@ -2801,7 +2800,7 @@ class RoboClicker {
                 if (dayIndex === 1) {
                     return {
                         cash: Math.floor(baseVal * 3 * streakBonus),
-                        gems: 250
+                        gems: 500
                     };
                 }
                 return {
@@ -2810,7 +2809,7 @@ class RoboClicker {
                 };
             case 'gems':
                 if (dayIndex === 2) {
-                    return 300; // Day 3 reward
+                    return 750; // Day 3 reward
                 }
                 return Math.floor(25 + (dayIndex * 5));
             case 'buff': return 120; // 120 seconds
